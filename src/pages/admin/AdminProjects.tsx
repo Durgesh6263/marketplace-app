@@ -24,9 +24,8 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { db, storage } from "@/integrations/firebase/client";
+import { db } from "@/integrations/firebase/client";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, query } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { categories } from "@/data/mockProjects";
@@ -165,22 +164,51 @@ const AdminProjects = () => {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploadingImage(true);
-    try {
-      const fileRef = ref(storage, `projects/${Date.now()}_${file.name}`);
-      await uploadBytes(fileRef, file);
-      const url = await getDownloadURL(fileRef);
-      setForm({ ...form, thumbnail: url });
-      toast({ title: "Image Uploaded", description: "Thumbnail uploaded successfully." });
-    } catch (err: any) {
-      toast({ title: "Upload Failed", description: err.message, variant: "destructive" });
-    } finally {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 600;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Compress to JPEG with 0.7 quality to save space
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+        setForm({ ...form, thumbnail: dataUrl });
+        setUploadingImage(false);
+        toast({ title: "Image Attached", description: "Thumbnail is ready." });
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => {
+      toast({ title: "Error", description: "Failed to read image", variant: "destructive" });
       setUploadingImage(false);
-    }
+    };
+    reader.readAsDataURL(file);
   };
 
   const deleteProject = async (id: string, title: string) => {
