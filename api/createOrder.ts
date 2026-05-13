@@ -1,7 +1,20 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import Razorpay from 'razorpay';
-import { db } from './firebase-admin';
-import * as admin from 'firebase-admin';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp } from 'firebase/firestore';
+
+const firebaseConfig = {
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
+  measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID
+};
+
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -16,8 +29,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       key_secret: process.env.RAZORPAY_KEY_SECRET || "o3jrSQSUAf9CA9kg4MdWcAyz",
     });
 
-    const projectDoc = await db.collection("projects").doc(project_id).get();
-    if (!projectDoc.exists) {
+    const projectRef = doc(db, "projects", project_id);
+    const projectDoc = await getDoc(projectRef);
+    
+    if (!projectDoc.exists()) {
       return res.status(404).json({ error: "Project not found" });
     }
     
@@ -30,7 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       receipt: `receipt_${Date.now()}`
     });
 
-    const orderRef = await db.collection("orders").add({
+    const orderRef = await addDoc(collection(db, "orders"), {
       project_id,
       project_title: project!.title,
       buyer_email,
@@ -39,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       amount: project!.price,
       status: "pending",
       razorpay_order_id: order.id,
-      created_at: admin.firestore.FieldValue.serverTimestamp()
+      created_at: serverTimestamp()
     });
 
     return res.status(200).json({

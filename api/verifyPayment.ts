@@ -1,7 +1,20 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
-import { db } from './firebase-admin';
-import * as admin from 'firebase-admin';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+
+const firebaseConfig = {
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
+  measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID
+};
+
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -21,14 +34,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: "Invalid payment signature" });
     }
 
-    await db.collection("orders").doc(order_id).update({
+    const orderRef = doc(db, "orders", order_id);
+    await updateDoc(orderRef, {
       status: "paid",
       razorpay_payment_id,
-      updated_at: admin.firestore.FieldValue.serverTimestamp()
+      updated_at: serverTimestamp()
     });
 
-    const orderDoc = await db.collection("orders").doc(order_id).get();
-    const projectDoc = await db.collection("projects").doc(orderDoc.data()!.project_id).get();
+    const orderDoc = await getDoc(orderRef);
+    const projectRef = doc(db, "projects", orderDoc.data()!.project_id);
+    const projectDoc = await getDoc(projectRef);
 
     return res.status(200).json({
       success: true,

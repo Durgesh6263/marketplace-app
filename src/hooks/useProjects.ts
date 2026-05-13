@@ -101,11 +101,11 @@ export const useProjects = () => {
     queryFn: async (): Promise<Project[]> => {
       const q = query(
         collection(db, "projects"),
-        where("is_published", "==", true),
-        orderBy("created_at", "desc")
+        where("is_published", "==", true)
       );
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => mapToProject(doc.id, doc.data() as DBProject));
+      const docs = snapshot.docs.map(doc => mapToProject(doc.id, doc.data() as DBProject));
+      return docs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     },
   });
 };

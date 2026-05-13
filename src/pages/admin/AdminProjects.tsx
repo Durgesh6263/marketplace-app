@@ -24,8 +24,9 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { db } from "@/integrations/firebase/client";
+import { db, storage } from "@/integrations/firebase/client";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, query } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { categories } from "@/data/mockProjects";
@@ -74,6 +75,7 @@ const AdminProjects = () => {
   const [editingProject, setEditingProject] = useState<DBProject | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const { toast } = useToast();
 
   const fetchProjects = async () => {
@@ -160,6 +162,24 @@ const AdminProjects = () => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const fileRef = ref(storage, `projects/${Date.now()}_${file.name}`);
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+      setForm({ ...form, thumbnail: url });
+      toast({ title: "Image Uploaded", description: "Thumbnail uploaded successfully." });
+    } catch (err: any) {
+      toast({ title: "Upload Failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -404,12 +424,24 @@ const AdminProjects = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Thumbnail URL (optional)</Label>
-              <Input
-                placeholder="https://..."
-                value={form.thumbnail}
-                onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
-              />
+              <Label>Project Image (Thumbnail)</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploadingImage}
+                />
+                <Input
+                  placeholder="Or paste image URL"
+                  value={form.thumbnail}
+                  onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
+                />
+              </div>
+              {uploadingImage && <p className="text-xs text-muted-foreground">Uploading image...</p>}
+              {form.thumbnail && (
+                <img src={form.thumbnail} alt="Preview" className="w-32 h-24 object-cover rounded-md mt-2" />
+              )}
             </div>
 
             <div className="space-y-2">
