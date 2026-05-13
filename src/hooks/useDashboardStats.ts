@@ -38,7 +38,7 @@ export const useDashboardStats = () => {
       // In a real production app, this would be a Cloud Function.
       // For this migration, we fetch and calculate client-side for admins.
       const projectsSnap = await getDocs(collection(db, "projects"));
-      const ordersSnap = await getDocs(query(collection(db, "orders"), orderBy("created_at", "desc")));
+      const ordersSnap = await getDocs(collection(db, "orders"));
       const usersSnap = await getDocs(collection(db, "user_roles"));
 
       let totalSalesAmount = 0;
@@ -83,6 +83,7 @@ export const useDashboardStats = () => {
       });
 
       const monthlySales = Object.values(monthlySalesMap).sort((a, b) => a.month.localeCompare(b.month));
+      recentOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       return {
         totalProjects: projectsSnap.size,
