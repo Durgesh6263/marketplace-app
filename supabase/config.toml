@@ -1,0 +1,22 @@
+project_id = "zpurnmxlmqmmfcrxstzl"
+
+[functions.create-order]
+verify_jwt = false
+
+[functions.verify-payment]
+verify_jwt = false
+
+[functions.admin-dashboard-stats]
+verify_jwt = false
+
+[functions.send-download-email]
+verify_jwt = false
+
+[functions.admin-contact-submissions]
+verify_jwt = false
+
+[functions.admin-branding]
+verify_jwt = false
+
+[functions.razorpay-webhook]
+verify_jwt = false
