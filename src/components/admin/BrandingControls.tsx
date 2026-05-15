@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, Save, Loader2, Image as ImageIcon, Globe } from "lucide-react";
-import { db } from "@/integrations/firebase/client";
+import { db, storage } from "@/integrations/firebase/client";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useToast } from "@/hooks/use-toast";
 import { useBranding } from "@/hooks/useBranding";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,71 +31,64 @@ const AdminBrandingControls = () => {
     setInitialized(true);
   }
 
-  const uploadFile = (file: File, type: "logo" | "favicon") => {
+  const uploadFile = async (file: File, type: "logo" | "favicon") => {
     const setUploading = type === "logo" ? setUploadingLogo : setUploadingFavicon;
     setUploading(true);
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = async () => {
-        try {
-          const canvas = document.createElement("canvas");
-          const MAX_WIDTH = type === "logo" ? 400 : 128;
-          const MAX_HEIGHT = type === "logo" ? 150 : 128;
-          let width = img.width || MAX_WIDTH;
-          let height = img.height || MAX_HEIGHT;
+    try {
+      const ext = file.name.split(".").pop();
+      const filePath = `branding/${type}-${Date.now()}.${ext}`;
+      const storageRef = ref(storage, filePath);
 
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
-          
-          canvas.width = Math.max(1, width);
-          canvas.height = Math.max(1, height);
-          const ctx = canvas.getContext("2d");
-          ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-          
-          const dataUrl = canvas.toDataURL(type === "favicon" ? "image/png" : "image/jpeg", 0.8);
+      // We use uploadBytesResumable to track progress and catch quick errors
+      const uploadTask = uploadBytesResumable(storageRef, file);
 
-          await setDoc(doc(db, "site_branding", "default"), {
-            [type === "logo" ? "logo_url" : "favicon_url"]: dataUrl,
-            updated_at: serverTimestamp(),
-          }, { merge: true });
-
-          queryClient.invalidateQueries({ queryKey: ["site-branding"] });
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          // Progress can be logged here if needed
+        },
+        (error) => {
           toast({
-            title: `${type === "logo" ? "Logo" : "Favicon"} Updated`,
-            description: "Changes will reflect across the website.",
-          });
-        } catch (err: any) {
-          toast({
-            title: "Upload Failed",
-            description: err.message || "Failed to process image.",
+            title: "Storage Error",
+            description: error.message,
             variant: "destructive",
           });
-        } finally {
           setUploading(false);
+        },
+        async () => {
+          try {
+            const publicUrl = await getDownloadURL(uploadTask.snapshot.ref);
+
+            await setDoc(doc(db, "site_branding", "default"), {
+              [type === "logo" ? "logo_url" : "favicon_url"]: publicUrl,
+              updated_at: serverTimestamp(),
+            }, { merge: true });
+
+            queryClient.invalidateQueries({ queryKey: ["site-branding"] });
+            toast({
+              title: `${type === "logo" ? "Logo" : "Favicon"} Updated`,
+              description: "Changes have been applied successfully.",
+            });
+          } catch (err: any) {
+            toast({
+              title: "Firestore Error",
+              description: err.message,
+              variant: "destructive",
+            });
+          } finally {
+            setUploading(false);
+          }
         }
-      };
-      img.onerror = () => {
-        toast({ title: "Error", description: "Invalid image file format.", variant: "destructive" });
-        setUploading(false);
-      };
-      img.src = event.target?.result as string;
-    };
-    reader.onerror = () => {
-      toast({ title: "Error", description: "Failed to read image", variant: "destructive" });
+      );
+    } catch (err: any) {
+      toast({
+        title: "Upload Initialization Failed",
+        description: err.message,
+        variant: "destructive",
+      });
       setUploading(false);
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const saveSettings = async () => {
