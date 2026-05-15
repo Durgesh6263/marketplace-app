@@ -9,6 +9,12 @@ export interface MonthlySales {
   count: number;
 }
 
+export interface UnitSoldBreakdown {
+  project_title: string;
+  units: number;
+  revenue: number;
+}
+
 export interface RecentOrder {
   id: string;
   project_id: string;
@@ -29,6 +35,7 @@ export interface DashboardStats {
   activeUsers: number;
   monthlySales: MonthlySales[];
   recentOrders: RecentOrder[];
+  unitsSoldBreakdown: UnitSoldBreakdown[];
 }
 
 export const useDashboardStats = () => {
@@ -46,9 +53,12 @@ export const useDashboardStats = () => {
       let totalDownloads = 0;
       const recentOrders: RecentOrder[] = [];
       const monthlySalesMap: Record<string, MonthlySales> = {};
+      const unitsBreakdownMap: Record<string, UnitSoldBreakdown> = {};
 
       projectsSnap.forEach(doc => {
-        totalDownloads += (doc.data().total_sales || 0);
+        const data = doc.data();
+        totalDownloads += (data.total_sales || 0);
+        unitsBreakdownMap[doc.id] = { project_title: data.title || "Unknown", units: 0, revenue: 0 };
       });
 
       ordersSnap.forEach(doc => {
@@ -56,6 +66,11 @@ export const useDashboardStats = () => {
         if (data.status === "paid" || data.status === "completed") {
           totalPaidOrders++;
           totalSalesAmount += (data.amount || 0);
+
+          if (data.project_id && unitsBreakdownMap[data.project_id]) {
+            unitsBreakdownMap[data.project_id].units++;
+            unitsBreakdownMap[data.project_id].revenue += (data.amount || 0);
+          }
 
           const date = new Date(data.created_at?.toDate ? data.created_at.toDate() : data.created_at);
           const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -84,6 +99,8 @@ export const useDashboardStats = () => {
 
       const monthlySales = Object.values(monthlySalesMap).sort((a, b) => a.month.localeCompare(b.month));
       recentOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      const unitsSoldBreakdown = Object.values(unitsBreakdownMap).filter(u => u.units > 0);
 
       return {
         totalProjects: projectsSnap.size,
@@ -92,7 +109,8 @@ export const useDashboardStats = () => {
         totalDownloads,
         activeUsers: usersSnap.size,
         monthlySales,
-        recentOrders
+        recentOrders,
+        unitsSoldBreakdown
       };
     },
     refetchInterval: 30000,

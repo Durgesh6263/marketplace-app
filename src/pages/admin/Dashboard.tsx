@@ -5,7 +5,14 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   useDashboardStats,
   useDashboardRealtime,
+  UnitSoldBreakdown,
 } from "@/hooks/useDashboardStats";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -41,6 +48,7 @@ const sidebarLinks = [
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [unitsModalOpen, setUnitsModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -48,16 +56,21 @@ const AdminDashboard = () => {
 
   useDashboardRealtime();
 
-  const statCards = [
     {
       label: "Total Projects",
       value: stats?.totalProjects ?? "—",
       change: "From database",
     },
     {
-      label: "Total Sales",
+      label: "Revenue",
       value: stats ? `₹${stats.totalSalesAmount.toLocaleString()}` : "—",
-      change: stats ? `${stats.totalPaidOrders} paid order${stats.totalPaidOrders !== 1 ? "s" : ""}` : "",
+      change: "Total earnings",
+    },
+    {
+      label: "Units Sold",
+      value: stats?.totalPaidOrders ?? "—",
+      change: "Click for details",
+      onClick: () => setUnitsModalOpen(true),
     },
     {
       label: "Active Users",
@@ -92,18 +105,19 @@ const AdminDashboard = () => {
               {isLoading && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-8">
               {statCards.map((stat, i) => (
                 <motion.div
                   key={stat.label}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className="rounded-xl border border-border bg-card p-5"
+                  className={`rounded-xl border border-border bg-card p-5 ${stat.onClick ? 'cursor-pointer hover:border-primary/50 transition-colors' : ''}`}
+                  onClick={stat.onClick}
                 >
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
                   <p className="font-display text-2xl font-bold text-foreground mt-1">{stat.value}</p>
-                  <p className="text-xs text-primary mt-1">{stat.change}</p>
+                  <p className={`text-xs mt-1 ${stat.onClick ? 'text-primary underline decoration-primary/30 underline-offset-2' : 'text-primary'}`}>{stat.change}</p>
                 </motion.div>
               ))}
             </div>
@@ -133,6 +147,48 @@ const AdminDashboard = () => {
                 <p className="text-sm text-muted-foreground mt-1">View team collaboration requests</p>
               </Link>
             </div>
+
+            <Dialog open={unitsModalOpen} onOpenChange={setUnitsModalOpen}>
+              <DialogContent className="sm:max-w-md border-border bg-card">
+                <DialogHeader>
+                  <DialogTitle className="font-display text-xl text-foreground">Units Sold — Breakdown</DialogTitle>
+                </DialogHeader>
+                <div className="mt-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-muted-foreground">
+                        <th className="py-2 text-left font-medium">PROJECT</th>
+                        <th className="py-2 text-right font-medium">UNITS</th>
+                        <th className="py-2 text-right font-medium">REVENUE</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats?.unitsSoldBreakdown.map((item, i) => (
+                        <tr key={i} className="border-b border-border/50 last:border-0">
+                          <td className="py-3 text-foreground font-medium">{item.project_title}</td>
+                          <td className="py-3 text-right text-muted-foreground">{item.units}</td>
+                          <td className="py-3 text-right text-foreground font-semibold">₹{item.revenue.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                      {(!stats?.unitsSoldBreakdown || stats.unitsSoldBreakdown.length === 0) && (
+                        <tr>
+                          <td colSpan={3} className="py-8 text-center text-muted-foreground">No units sold yet</td>
+                        </tr>
+                      )}
+                    </tbody>
+                    {stats?.unitsSoldBreakdown && stats.unitsSoldBreakdown.length > 0 && (
+                      <tfoot>
+                        <tr className="border-t border-border">
+                          <td className="py-3 text-foreground font-bold">Total</td>
+                          <td className="py-3 text-right text-foreground font-bold">{stats.totalPaidOrders}</td>
+                          <td className="py-3 text-right text-primary font-bold">₹{stats.totalSalesAmount.toLocaleString()}</td>
+                        </tr>
+                      </tfoot>
+                    )}
+                  </table>
+                </div>
+              </DialogContent>
+            </Dialog>
           </>
         );
     }
