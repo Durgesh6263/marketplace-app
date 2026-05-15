@@ -38,16 +38,16 @@ const FeaturedProjects = () => {
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.slice(0, 6).map((project, index) => (
+            {projects.slice(0, 3).map((project, index) => (
               <ProjectCard key={project.id} project={project} index={index} />
             ))}
           </div>
         )}
 
-        <div className="mt-8 text-center sm:hidden">
-          <Button variant="outline-glow" asChild>
+        <div className="mt-12 text-center">
+          <Button variant="outline-glow" size="lg" asChild className="px-8">
             <Link to="/projects">
-              View All Projects <ArrowRight className="ml-1 h-4 w-4" />
+              View All Projects <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </div>
