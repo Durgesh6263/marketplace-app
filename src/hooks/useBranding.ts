@@ -50,8 +50,8 @@ export const useBrandingRealtime = () => {
   }, [queryClient]);
 };
 
-/** Update favicon in DOM when branding changes */
-export const useFaviconSync = (faviconUrl: string | null | undefined) => {
+/** Update favicon and title in DOM when branding changes */
+export const useBrandingSync = (faviconUrl: string | null | undefined, siteName: string | undefined) => {
   useEffect(() => {
     if (!faviconUrl) return;
     const link = document.querySelector<HTMLLinkElement>("link[rel*='icon']");
@@ -64,4 +64,10 @@ export const useFaviconSync = (faviconUrl: string | null | undefined) => {
       document.head.appendChild(newLink);
     }
   }, [faviconUrl]);
+
+  useEffect(() => {
+    if (siteName) {
+      document.title = siteName;
+    }
+  }, [siteName]);
 };

@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { db } from "@/integrations/firebase/client";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useProjectsRealtime } from "@/hooks/useProjects";
-import { useBrandingRealtime, useFaviconSync, useBranding } from "@/hooks/useBranding";
+import { useBrandingRealtime, useBrandingSync, useBranding } from "@/hooks/useBranding";
 
 const useSellerRequestsRealtime = () => {
   const queryClient = useQueryClient();
@@ -50,7 +50,7 @@ const RealtimeProvider = ({ children }: { children: React.ReactNode }) => {
   useOrdersRealtime();
   useContactSubmissionsRealtime();
   useBrandingRealtime();
-  useFaviconSync(branding?.favicon_url);
+  useBrandingSync(branding?.favicon_url, branding?.site_name);
 
   return <>{children}</>;
 };
