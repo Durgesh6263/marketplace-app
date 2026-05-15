@@ -29,6 +29,8 @@ const ProjectDetail = () => {
     download_url: string;
   } | null>(null);
 
+  const [selectedMedia, setSelectedMedia] = useState<{ type: 'video' | 'image', url: string } | null>(null);
+
   const videoId = getYouTubeId(project?.demoVideoUrl);
   console.log("Demo Video Debug:", {
     rawUrl: project?.demoVideoUrl,
@@ -63,6 +65,8 @@ const ProjectDetail = () => {
     );
   }
 
+  const activeMedia = selectedMedia || (project.demoVideoUrl ? { type: 'video' as const, url: project.demoVideoUrl } : { type: 'image' as const, url: project.thumbnail || "" });
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -83,10 +87,10 @@ const ProjectDetail = () => {
               animate={{ opacity: 1, y: 0 }}
               className="lg:col-span-2 space-y-8"
             >
-              {/* Unified Media Gallery */}
+              {/* Unified Interactive Media Gallery */}
               <div className="space-y-4">
-                {/* Main Preview Area */}
-                {project.demoVideoUrl ? (
+                {/* Main Large Preview Area */}
+                {activeMedia.type === 'video' ? (
                   videoId ? (
                     <Dialog>
                       <DialogTrigger asChild>
@@ -113,7 +117,7 @@ const ProjectDetail = () => {
                     </Dialog>
                   ) : (
                     <button 
-                      onClick={() => window.open(project.demoVideoUrl, "_blank")}
+                      onClick={() => window.open(activeMedia.url, "_blank")}
                       className="relative w-full aspect-video overflow-hidden rounded-xl border border-border bg-card cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary/50"
                     >
                       <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -128,25 +132,46 @@ const ProjectDetail = () => {
                     </button>
                   )
                 ) : (
-                  <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                    <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover" />
-                  </div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button className="relative w-full aspect-video overflow-hidden rounded-xl border border-border bg-card shadow-sm cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <img src={activeMedia.url} alt={project.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-5xl w-[90vw] bg-background/95 backdrop-blur-md border-border p-1 overflow-hidden">
+                      <img src={activeMedia.url} alt={project.title} className="w-full h-auto max-h-[85vh] object-contain rounded-md" />
+                    </DialogContent>
+                  </Dialog>
                 )}
 
-                {/* Screenshots Thumbnail Row */}
-                {project.projectImages && project.projectImages.length > 0 && (
-                  <div className="grid grid-cols-4 gap-3 md:gap-4">
-                    {project.projectImages.map((url, i) => (
-                      <Dialog key={i}>
-                        <DialogTrigger asChild>
-                          <button className="relative aspect-video overflow-hidden rounded-lg border border-border bg-secondary transition-all hover:opacity-90 hover:ring-2 hover:ring-primary/50 focus:outline-none shadow-sm">
-                            <img src={url} alt={`${project.title} screenshot ${i + 1}`} className="w-full h-full object-cover" />
-                          </button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-5xl w-[90vw] bg-background/95 backdrop-blur-md border-border p-1 overflow-hidden">
-                          <img src={url} alt={`${project.title} screenshot ${i + 1}`} className="w-full h-auto max-h-[85vh] object-contain rounded-md" />
-                        </DialogContent>
-                      </Dialog>
+                {/* Thumbnails Row */}
+                {((project.projectImages && project.projectImages.length > 0) || project.demoVideoUrl) && (
+                  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3 md:gap-4">
+                    {/* Video Thumbnail (if exists) */}
+                    {project.demoVideoUrl && (
+                      <button 
+                        onClick={() => setSelectedMedia({ type: 'video', url: project.demoVideoUrl! })}
+                        className={`relative aspect-video overflow-hidden rounded-lg border-2 transition-all hover:opacity-90 focus:outline-none shadow-sm ${activeMedia.type === 'video' ? 'border-primary ring-2 ring-primary/30' : 'border-transparent bg-secondary'}`}
+                      >
+                        <img src={project.thumbnail} alt="Video Preview" className="w-full h-full object-cover opacity-80" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
+                             <Play className="h-4 w-4 ml-0.5" />
+                           </div>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Image Thumbnails */}
+                    {project.projectImages?.map((url, i) => (
+                      <button 
+                        key={i}
+                        onClick={() => setSelectedMedia({ type: 'image', url })}
+                        className={`relative aspect-video overflow-hidden rounded-lg border-2 transition-all hover:opacity-90 focus:outline-none shadow-sm ${activeMedia.url === url ? 'border-primary ring-2 ring-primary/30' : 'border-transparent bg-secondary'}`}
+                      >
+                        <img src={url} alt={`Screenshot ${i + 1}`} className="w-full h-full object-cover" />
+                      </button>
                     ))}
                   </div>
                 )}
