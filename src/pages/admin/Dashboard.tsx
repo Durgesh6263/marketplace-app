@@ -55,7 +55,7 @@ const AdminDashboard = () => {
   const { data: stats, isLoading } = useDashboardStats();
 
   useDashboardRealtime();
-
+  const statCards = [
     {
       label: "Total Projects",
       value: stats?.totalProjects ?? "—",
