@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Save, Loader2, Image, Globe } from "lucide-react";
+import { Upload, Save, Loader2, Image as ImageIcon, Globe } from "lucide-react";
 import { db } from "@/integrations/firebase/client";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
@@ -144,7 +144,7 @@ const AdminBrandingControls = () => {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-border bg-card p-6 space-y-4">
           <div className="flex items-center gap-2">
-            <Image className="h-5 w-5 text-primary" />
+            <ImageIcon className="h-5 w-5 text-primary" />
             <h3 className="font-display font-semibold text-foreground">Website Logo</h3>
           </div>
           {branding?.logo_url && (
