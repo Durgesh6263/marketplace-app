@@ -82,74 +82,74 @@ const ProjectDetail = () => {
               animate={{ opacity: 1, y: 0 }}
               className="lg:col-span-2 space-y-8"
             >
-              {/* Preview area */}
-              {project.demoVideoUrl ? (
-                videoId ? (
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <button className="relative w-full aspect-video overflow-hidden rounded-xl border border-border bg-card cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary/50">
-                        <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center transition-colors group-hover:bg-black/50">
-                          <div className="text-center space-y-3">
-                            <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
-                              <Play className="h-8 w-8 ml-1" />
+              {/* Unified Media Gallery */}
+              <div className="space-y-4">
+                {/* Main Preview Area */}
+                {project.demoVideoUrl ? (
+                  videoId ? (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button className="relative w-full aspect-video overflow-hidden rounded-xl border border-border bg-card cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary/50">
+                          <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center transition-colors group-hover:bg-black/50">
+                            <div className="text-center space-y-3">
+                              <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
+                                <Play className="h-8 w-8 ml-1" />
+                              </div>
+                              <p className="text-white font-medium drop-shadow-md">Watch Demo Video</p>
                             </div>
-                            <p className="text-white font-medium drop-shadow-md">Watch Demo Video</p>
                           </div>
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-5xl w-[90vw] bg-background/95 backdrop-blur-md border-border p-1 overflow-hidden">
+                        <iframe
+                          className="w-full aspect-video rounded-md"
+                          src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        ></iframe>
+                      </DialogContent>
+                    </Dialog>
+                  ) : (
+                    <button 
+                      onClick={() => window.open(project.demoVideoUrl, "_blank")}
+                      className="relative w-full aspect-video overflow-hidden rounded-xl border border-border bg-card cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center transition-colors group-hover:bg-black/50">
+                        <div className="text-center space-y-3">
+                          <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
+                            <Play className="h-8 w-8 ml-1" />
+                          </div>
+                          <p className="text-white font-medium drop-shadow-md">Open External Video</p>
                         </div>
-                      </button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-5xl w-[90vw] bg-background/95 backdrop-blur-md border-border p-1 overflow-hidden">
-                      <iframe
-                        className="w-full aspect-video rounded-md"
-                        src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      ></iframe>
-                    </DialogContent>
-                  </Dialog>
-                ) : (
-                  <button 
-                    onClick={() => window.open(project.demoVideoUrl, "_blank")}
-                    className="relative w-full aspect-video overflow-hidden rounded-xl border border-border bg-card cursor-pointer group focus:outline-none"
-                  >
-                    <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center transition-colors group-hover:bg-black/50">
-                      <div className="text-center space-y-3">
-                        <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
-                          <Play className="h-8 w-8 ml-1" />
-                        </div>
-                        <p className="text-white font-medium drop-shadow-md">Open External Video</p>
                       </div>
-                    </div>
-                  </button>
-                )
-              ) : (
-                <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-card">
-                  <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover" />
-                </div>
-              )}
+                    </button>
+                  )
+                ) : (
+                  <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                    <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover" />
+                  </div>
+                )}
 
-              {/* Screenshots */}
-              {project.projectImages && project.projectImages.length > 0 && (
-                <div>
-                  <h3 className="font-display text-lg font-semibold text-foreground mb-4">Screenshots</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+                {/* Screenshots Thumbnail Row */}
+                {project.projectImages && project.projectImages.length > 0 && (
+                  <div className="grid grid-cols-4 gap-3 md:gap-4">
                     {project.projectImages.map((url, i) => (
                       <Dialog key={i}>
                         <DialogTrigger asChild>
-                          <button className="relative aspect-video overflow-hidden rounded-xl border border-border bg-secondary transition-all hover:opacity-80 hover:ring-2 hover:ring-primary/50 focus:outline-none">
+                          <button className="relative aspect-video overflow-hidden rounded-lg border border-border bg-secondary transition-all hover:opacity-90 hover:ring-2 hover:ring-primary/50 focus:outline-none shadow-sm">
                             <img src={url} alt={`${project.title} screenshot ${i + 1}`} className="w-full h-full object-cover" />
                           </button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-5xl bg-background/95 backdrop-blur-md border-border p-1 overflow-hidden">
+                        <DialogContent className="max-w-5xl w-[90vw] bg-background/95 backdrop-blur-md border-border p-1 overflow-hidden">
                           <img src={url} alt={`${project.title} screenshot ${i + 1}`} className="w-full h-auto max-h-[85vh] object-contain rounded-md" />
                         </DialogContent>
                       </Dialog>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Description */}
               <div>
