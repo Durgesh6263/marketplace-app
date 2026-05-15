@@ -84,6 +84,10 @@ const AdminBrandingControls = () => {
           setUploading(false);
         }
       };
+      img.onerror = () => {
+        toast({ title: "Error", description: "Invalid image file format.", variant: "destructive" });
+        setUploading(false);
+      };
       img.src = event.target?.result as string;
     };
     reader.onerror = () => {
