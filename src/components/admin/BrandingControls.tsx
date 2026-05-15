@@ -38,32 +38,32 @@ const AdminBrandingControls = () => {
     reader.onload = (event) => {
       const img = new Image();
       img.onload = async () => {
-        const canvas = document.createElement("canvas");
-        const MAX_WIDTH = type === "logo" ? 400 : 128;
-        const MAX_HEIGHT = type === "logo" ? 150 : 128;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        const dataUrl = canvas.toDataURL(type === "favicon" ? "image/png" : "image/jpeg", 0.8);
-
         try {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = type === "logo" ? 400 : 128;
+          const MAX_HEIGHT = type === "logo" ? 150 : 128;
+          let width = img.width || MAX_WIDTH;
+          let height = img.height || MAX_HEIGHT;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = Math.max(1, width);
+          canvas.height = Math.max(1, height);
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+          
+          const dataUrl = canvas.toDataURL(type === "favicon" ? "image/png" : "image/jpeg", 0.8);
+
           await setDoc(doc(db, "site_branding", "default"), {
             [type === "logo" ? "logo_url" : "favicon_url"]: dataUrl,
             updated_at: serverTimestamp(),
@@ -77,7 +77,7 @@ const AdminBrandingControls = () => {
         } catch (err: any) {
           toast({
             title: "Upload Failed",
-            description: err.message,
+            description: err.message || "Failed to process image.",
             variant: "destructive",
           });
         } finally {
