@@ -34,6 +34,7 @@ const ProjectDetail = () => {
     rawUrl: project?.demoVideoUrl,
     parsedVideoId: videoId
   });
+  console.log("Gallery Images Debug:", project?.projectImages);
 
   if (isLoading) {
     return (

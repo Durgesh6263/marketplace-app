@@ -31,7 +31,7 @@ const mapToProject = (id: string, p: DBProject): Project => ({
   price: p.price,
   category: p.category,
   thumbnail: p.thumbnail || "",
-  projectImages: p.projectImages || [],
+  projectImages: p.projectImages || (p as any).screenshots || [],
   demoVideoUrl: p.demo_video_url || undefined,
   features: p.features || [],
   techStack: p.tech_stack || [],
