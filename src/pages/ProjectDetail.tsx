@@ -131,11 +131,11 @@ const ProjectDetail = () => {
               )}
 
               {/* Screenshots */}
-              {project.screenshots && project.screenshots.length > 0 && (
+              {project.projectImages && project.projectImages.length > 0 && (
                 <div>
                   <h3 className="font-display text-lg font-semibold text-foreground mb-4">Screenshots</h3>
                   <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                    {project.screenshots.map((url, i) => (
+                    {project.projectImages.map((url, i) => (
                       <Dialog key={i}>
                         <DialogTrigger asChild>
                           <button className="relative aspect-video overflow-hidden rounded-xl border border-border bg-secondary transition-all hover:opacity-80 hover:ring-2 hover:ring-primary/50 focus:outline-none">

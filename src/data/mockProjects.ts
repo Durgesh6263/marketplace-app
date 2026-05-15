@@ -6,7 +6,7 @@ export interface Project {
   price: number;
   category: string;
   thumbnail: string;
-  screenshots: string[];
+  projectImages: string[];
   demoVideoUrl?: string;
   features: string[];
   techStack: string[];
@@ -36,7 +36,7 @@ export const mockProjects: Project[] = [
     price: 2499,
     category: "Web Development",
     thumbnail: "",
-    screenshots: [],
+    projectImages: [],
     features: ["User Authentication", "Product Management", "Shopping Cart", "Payment Gateway", "Order Tracking", "Admin Panel"],
     techStack: ["React", "Node.js", "MongoDB", "Stripe", "Tailwind CSS"],
     rating: 4.8,
@@ -51,7 +51,7 @@ export const mockProjects: Project[] = [
     price: 3499,
     category: "Machine Learning",
     thumbnail: "",
-    screenshots: [],
+    projectImages: [],
     features: ["NLP Processing", "Intent Recognition", "Context Management", "API Integration", "Analytics Dashboard"],
     techStack: ["Python", "TensorFlow", "Flask", "React", "PostgreSQL"],
     rating: 4.6,
@@ -66,7 +66,7 @@ export const mockProjects: Project[] = [
     price: 1999,
     category: "IoT",
     thumbnail: "",
-    screenshots: [],
+    projectImages: [],
     features: ["Real-time Monitoring", "Device Control", "Automation Rules", "Data Visualization", "Mobile Responsive"],
     techStack: ["React", "MQTT", "Node.js", "InfluxDB", "Chart.js"],
     rating: 4.5,
@@ -81,7 +81,7 @@ export const mockProjects: Project[] = [
     price: 4999,
     category: "Blockchain",
     thumbnail: "",
-    screenshots: [],
+    projectImages: [],
     features: ["Blockchain Security", "Voter Verification", "Real-time Results", "Audit Trail", "Smart Contracts"],
     techStack: ["Solidity", "React", "Web3.js", "Ganache", "MetaMask"],
     rating: 4.9,
@@ -96,7 +96,7 @@ export const mockProjects: Project[] = [
     price: 2999,
     category: "Data Science",
     thumbnail: "",
-    screenshots: [],
+    projectImages: [],
     features: ["Sentiment Analysis", "Trend Detection", "Engagement Metrics", "Custom Reports", "Multi-platform"],
     techStack: ["Python", "Pandas", "Plotly", "FastAPI", "React"],
     rating: 4.7,
@@ -111,7 +111,7 @@ export const mockProjects: Project[] = [
     price: 3999,
     category: "Mobile App",
     thumbnail: "",
-    screenshots: [],
+    projectImages: [],
     features: ["Workout Tracking", "Calorie Counter", "Goal Setting", "Progress Charts", "Social Features"],
     techStack: ["React Native", "Firebase", "Redux", "Node.js", "MongoDB"],
     rating: 4.4,

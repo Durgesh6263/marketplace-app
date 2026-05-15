@@ -40,7 +40,7 @@ interface DBProject {
   price: number;
   category: string;
   thumbnail: string;
-  screenshots: string[];
+  projectImages: string[];
   demo_video_url: string;
   download_url: string;
   features: string[];
@@ -63,7 +63,7 @@ const emptyForm = {
   tech_stack: "",
   demo_video_url: "",
   thumbnail: "",
-  screenshots: [] as string[],
+  projectImages: [] as string[],
   download_url: "",
   is_published: true,
   total_sales: "0",
@@ -118,7 +118,7 @@ const AdminProjects = () => {
       tech_stack: (project.tech_stack || []).join(", "),
       demo_video_url: project.demo_video_url || "",
       thumbnail: project.thumbnail || "",
-      screenshots: project.screenshots || [],
+      projectImages: project.projectImages || [],
       download_url: project.download_url || "",
       is_published: project.is_published,
       total_sales: (project.total_sales || 0).toString(),
@@ -145,7 +145,7 @@ const AdminProjects = () => {
         tech_stack: form.tech_stack.split(",").map((t) => t.trim()).filter(Boolean),
         demo_video_url: form.demo_video_url.trim(),
         thumbnail: form.thumbnail.trim(),
-        screenshots: form.screenshots,
+        projectImages: form.projectImages,
         download_url: form.download_url.trim(),
         is_published: form.is_published,
         total_sales: parseInt(form.total_sales) || 0,
@@ -224,7 +224,7 @@ const AdminProjects = () => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
-    if (form.screenshots.length + files.length > 4) {
+    if (form.projectImages.length + files.length > 4) {
       toast({ title: "Limit Exceeded", description: "Maximum 4 screenshots allowed.", variant: "destructive" });
       return;
     }
@@ -252,7 +252,7 @@ const AdminProjects = () => {
 
     Promise.all(uploadPromises)
       .then((urls) => {
-        setForm((prev) => ({ ...prev, screenshots: [...prev.screenshots, ...urls].slice(0, 4) }));
+        setForm((prev) => ({ ...prev, projectImages: [...prev.projectImages, ...urls].slice(0, 4) }));
         toast({ title: "Uploaded", description: "Screenshots added successfully." });
       })
       .catch((err) => {
@@ -266,7 +266,7 @@ const AdminProjects = () => {
   const removeScreenshot = (indexToRemove: number) => {
     setForm(prev => ({
       ...prev,
-      screenshots: prev.screenshots.filter((_, idx) => idx !== indexToRemove)
+      projectImages: prev.projectImages.filter((_, idx) => idx !== indexToRemove)
     }));
   };
 
@@ -539,15 +539,15 @@ const AdminProjects = () => {
                   accept="image/*"
                   multiple
                   onChange={handleScreenshotUpload}
-                  disabled={uploadingScreenshots || form.screenshots.length >= 4}
+                  disabled={uploadingScreenshots || form.projectImages.length >= 4}
                 />
               </div>
               <p className="text-xs text-muted-foreground">Upload up to 4 high-quality screenshots.</p>
               {uploadingScreenshots && <p className="text-xs text-muted-foreground">Uploading screenshots...</p>}
               
-              {form.screenshots.length > 0 && (
+              {form.projectImages.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                  {form.screenshots.map((url, idx) => (
+                  {form.projectImages.map((url, idx) => (
                     <div key={idx} className="relative group">
                       <img src={url} alt={`Screenshot ${idx + 1}`} className="w-full h-24 object-cover rounded-md border border-border" />
                       <button

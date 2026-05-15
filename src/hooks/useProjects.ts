@@ -12,7 +12,7 @@ interface DBProject {
   price: number;
   category: string;
   thumbnail: string;
-  screenshots: string[];
+  projectImages: string[];
   demo_video_url: string;
   features: string[];
   tech_stack: string[];
@@ -31,7 +31,7 @@ const mapToProject = (id: string, p: DBProject): Project => ({
   price: p.price,
   category: p.category,
   thumbnail: p.thumbnail || "",
-  screenshots: p.screenshots || [],
+  projectImages: p.projectImages || [],
   demoVideoUrl: p.demo_video_url || undefined,
   features: p.features || [],
   techStack: p.tech_stack || [],
