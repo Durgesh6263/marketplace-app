@@ -65,13 +65,14 @@ const MonthlySalesChart = ({ data }: Props) => {
             <YAxis
               tickLine={false}
               axisLine={false}
-              tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
+              tickFormatter={(v) => v >= 1000 ? `₹${(v / 1000).toFixed(1)}k` : `₹${v}`}
             />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Bar
               dataKey="sales"
               fill="var(--color-sales)"
               radius={[4, 4, 0, 0]}
+              maxBarSize={60}
             />
           </BarChart>
         </ChartContainer>
