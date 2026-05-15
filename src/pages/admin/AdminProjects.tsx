@@ -24,8 +24,9 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { db } from "@/integrations/firebase/client";
+import { db, storage } from "@/integrations/firebase/client";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, query } from "firebase/firestore";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { categories } from "@/data/mockProjects";
@@ -61,6 +62,7 @@ const emptyForm = {
   tech_stack: "",
   demo_video_url: "",
   thumbnail: "",
+  screenshots: [] as string[],
   download_url: "",
   is_published: true,
   total_sales: "0",
@@ -75,6 +77,7 @@ const AdminProjects = () => {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingScreenshots, setUploadingScreenshots] = useState(false);
   const { toast } = useToast();
 
   const fetchProjects = async () => {
@@ -113,6 +116,7 @@ const AdminProjects = () => {
       tech_stack: (project.tech_stack || []).join(", "),
       demo_video_url: project.demo_video_url || "",
       thumbnail: project.thumbnail || "",
+      screenshots: project.screenshots || [],
       download_url: project.download_url || "",
       is_published: project.is_published,
       total_sales: (project.total_sales || 0).toString(),
@@ -138,6 +142,7 @@ const AdminProjects = () => {
         tech_stack: form.tech_stack.split(",").map((t) => t.trim()).filter(Boolean),
         demo_video_url: form.demo_video_url.trim(),
         thumbnail: form.thumbnail.trim(),
+        screenshots: form.screenshots,
         download_url: form.download_url.trim(),
         is_published: form.is_published,
         total_sales: parseInt(form.total_sales) || 0,
@@ -209,6 +214,56 @@ const AdminProjects = () => {
       setUploadingImage(false);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    if (form.screenshots.length + files.length > 4) {
+      toast({ title: "Limit Exceeded", description: "Maximum 4 screenshots allowed.", variant: "destructive" });
+      return;
+    }
+
+    setUploadingScreenshots(true);
+
+    const uploadPromises = files.map(async (file) => {
+      const ext = file.name.split(".").pop();
+      const filePath = `projects/screenshots/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+      const storageRef = ref(storage, filePath);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      return new Promise<string>((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          null,
+          (error) => reject(error),
+          async () => {
+            const url = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(url);
+          }
+        );
+      });
+    });
+
+    Promise.all(uploadPromises)
+      .then((urls) => {
+        setForm((prev) => ({ ...prev, screenshots: [...prev.screenshots, ...urls].slice(0, 4) }));
+        toast({ title: "Uploaded", description: "Screenshots added successfully." });
+      })
+      .catch((err) => {
+        toast({ title: "Upload Failed", description: err.message, variant: "destructive" });
+      })
+      .finally(() => {
+        setUploadingScreenshots(false);
+      });
+  };
+
+  const removeScreenshot = (indexToRemove: number) => {
+    setForm(prev => ({
+      ...prev,
+      screenshots: prev.screenshots.filter((_, idx) => idx !== indexToRemove)
+    }));
   };
 
   const deleteProject = async (id: string, title: string) => {
@@ -469,6 +524,38 @@ const AdminProjects = () => {
               {uploadingImage && <p className="text-xs text-muted-foreground">Uploading image...</p>}
               {form.thumbnail && (
                 <img src={form.thumbnail} alt="Preview" className="w-32 h-24 object-cover rounded-md mt-2" />
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Project Screenshots (Max 4)</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleScreenshotUpload}
+                  disabled={uploadingScreenshots || form.screenshots.length >= 4}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Upload up to 4 high-quality screenshots.</p>
+              {uploadingScreenshots && <p className="text-xs text-muted-foreground">Uploading screenshots...</p>}
+              
+              {form.screenshots.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                  {form.screenshots.map((url, idx) => (
+                    <div key={idx} className="relative group">
+                      <img src={url} alt={`Screenshot ${idx + 1}`} className="w-full h-24 object-cover rounded-md border border-border" />
+                      <button
+                        onClick={() => removeScreenshot(idx)}
+                        className="absolute top-1 right-1 bg-black/60 hover:bg-red-500/80 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Remove"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 

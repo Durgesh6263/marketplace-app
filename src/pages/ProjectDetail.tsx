@@ -10,6 +10,7 @@ import StarRating from "@/components/projects/StarRating";
 import { motion } from "framer-motion";
 import CheckoutDialog from "@/components/checkout/CheckoutDialog";
 import PaymentSuccessModal from "@/components/checkout/PaymentSuccessModal";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 const ProjectDetail = () => {
   const { id } = useParams();
@@ -83,19 +84,25 @@ const ProjectDetail = () => {
               </div>
 
               {/* Screenshots */}
-              <div>
-                <h3 className="font-display text-lg font-semibold text-foreground mb-4">Screenshots</h3>
-                <div className="grid grid-cols-3 gap-3">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="aspect-video rounded-lg border border-border bg-secondary flex items-center justify-center"
-                    >
-                      <span className="text-xs text-muted-foreground">Screenshot {i}</span>
-                    </div>
-                  ))}
+              {project.screenshots && project.screenshots.length > 0 && (
+                <div>
+                  <h3 className="font-display text-lg font-semibold text-foreground mb-4">Screenshots</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+                    {project.screenshots.map((url, i) => (
+                      <Dialog key={i}>
+                        <DialogTrigger asChild>
+                          <button className="relative aspect-video overflow-hidden rounded-xl border border-border bg-secondary transition-all hover:opacity-80 hover:ring-2 hover:ring-primary/50 focus:outline-none">
+                            <img src={url} alt={`${project.title} screenshot ${i + 1}`} className="w-full h-full object-cover" />
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-5xl bg-background/95 backdrop-blur-md border-border p-1 overflow-hidden">
+                          <img src={url} alt={`${project.title} screenshot ${i + 1}`} className="w-full h-auto max-h-[85vh] object-contain rounded-md" />
+                        </DialogContent>
+                      </Dialog>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Description */}
               <div>
