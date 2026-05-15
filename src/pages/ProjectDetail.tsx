@@ -12,6 +12,12 @@ import CheckoutDialog from "@/components/checkout/CheckoutDialog";
 import PaymentSuccessModal from "@/components/checkout/PaymentSuccessModal";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
+const getYouTubeId = (url?: string) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
 const ProjectDetail = () => {
   const { id } = useParams();
   const { data: project, isLoading } = useProject(id || "");
@@ -22,6 +28,8 @@ const ProjectDetail = () => {
     project_title: string;
     download_url: string;
   } | null>(null);
+
+  const videoId = getYouTubeId(project?.demoVideoUrl);
 
   if (isLoading) {
     return (
@@ -71,17 +79,35 @@ const ProjectDetail = () => {
               className="lg:col-span-2 space-y-8"
             >
               {/* Preview area */}
-              <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-card">
-                <div className="absolute inset-0 bg-gradient-green opacity-5" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center space-y-3">
-                    <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <Play className="h-8 w-8" />
+              {videoId ? (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-card cursor-pointer group">
+                      <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center transition-colors group-hover:bg-black/50">
+                        <div className="text-center space-y-3">
+                          <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
+                            <Play className="h-8 w-8 ml-1" />
+                          </div>
+                          <p className="text-white font-medium drop-shadow-md">Watch Demo Video</p>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-muted-foreground text-sm">Demo Video Preview</p>
-                  </div>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-5xl bg-background/95 backdrop-blur-md border-border p-1 overflow-hidden">
+                    <iframe
+                      className="w-full aspect-video rounded-md"
+                      src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </DialogContent>
+                </Dialog>
+              ) : (
+                <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-card">
+                  <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover" />
                 </div>
-              </div>
+              )}
 
               {/* Screenshots */}
               {project.screenshots && project.screenshots.length > 0 && (
