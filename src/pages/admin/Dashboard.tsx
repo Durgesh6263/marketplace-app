@@ -34,6 +34,7 @@ import AdminContactSubmissions from "@/components/admin/ContactSubmissions";
 import AdminBrandingControls from "@/components/admin/BrandingControls";
 import MonthlySalesChart from "@/components/admin/MonthlySalesChart";
 import RecentOrdersTable from "@/components/admin/RecentOrdersTable";
+import TopSellingProjects from "@/components/admin/TopSellingProjects";
 
 const sidebarLinks = [
   { icon: LayoutDashboard, label: "Dashboard", to: "/admin" },
@@ -126,7 +127,8 @@ const AdminDashboard = () => {
               <MonthlySalesChart data={stats?.monthlySales || []} />
             </div>
 
-            <div className="mb-8">
+            <div className="grid gap-8 lg:grid-cols-2 mb-8">
+              <TopSellingProjects data={stats?.unitsSoldBreakdown || []} />
               <RecentOrdersTable orders={stats?.recentOrders || []} />
             </div>
 

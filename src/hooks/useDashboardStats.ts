@@ -10,9 +10,12 @@ export interface MonthlySales {
 }
 
 export interface UnitSoldBreakdown {
+  project_id: string;
   project_title: string;
+  image_url: string;
   units: number;
   revenue: number;
+  last_purchase_date: string | null;
 }
 
 export interface RecentOrder {
@@ -58,7 +61,14 @@ export const useDashboardStats = () => {
       projectsSnap.forEach(doc => {
         const data = doc.data();
         totalDownloads += (data.total_sales || 0);
-        unitsBreakdownMap[doc.id] = { project_title: data.title || "Unknown", units: 0, revenue: 0 };
+        unitsBreakdownMap[doc.id] = { 
+          project_id: doc.id,
+          project_title: data.title || "Unknown", 
+          image_url: data.thumbnail_url || "",
+          units: 0, 
+          revenue: 0,
+          last_purchase_date: null
+        };
       });
 
       ordersSnap.forEach(doc => {
@@ -70,6 +80,11 @@ export const useDashboardStats = () => {
           if (data.project_id && unitsBreakdownMap[data.project_id]) {
             unitsBreakdownMap[data.project_id].units++;
             unitsBreakdownMap[data.project_id].revenue += (data.amount || 0);
+            
+            const orderDateStr = data.created_at?.toDate ? data.created_at.toDate().toISOString() : data.created_at;
+            if (!unitsBreakdownMap[data.project_id].last_purchase_date || new Date(orderDateStr) > new Date(unitsBreakdownMap[data.project_id].last_purchase_date!)) {
+              unitsBreakdownMap[data.project_id].last_purchase_date = orderDateStr;
+            }
           }
 
           const date = new Date(data.created_at?.toDate ? data.created_at.toDate() : data.created_at);
@@ -100,7 +115,9 @@ export const useDashboardStats = () => {
       const monthlySales = Object.values(monthlySalesMap).sort((a, b) => a.month.localeCompare(b.month));
       recentOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       
-      const unitsSoldBreakdown = Object.values(unitsBreakdownMap).filter(u => u.units > 0);
+      const unitsSoldBreakdown = Object.values(unitsBreakdownMap)
+        .filter(u => u.units > 0)
+        .sort((a, b) => b.units - a.units);
 
       return {
         totalProjects: projectsSnap.size,
