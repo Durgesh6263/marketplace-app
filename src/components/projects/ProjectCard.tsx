@@ -73,9 +73,10 @@ const ProjectCard = ({ project, index = 0 }: ProjectCardProps) => {
 
             {/* Footer */}
             <div className="flex items-center justify-between pt-2 border-t border-border">
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-primary text-primary" />
+              <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-2.5 py-1 backdrop-blur-sm">
+                <Star className="h-3.5 w-3.5 fill-primary text-primary" />
                 <span className="text-sm font-medium text-foreground">{project.rating}</span>
+                <span className="text-xs text-muted-foreground ml-1">({project.totalRatings || 0} ratings)</span>
                 <span className="text-xs text-muted-foreground">({project.totalSales} sales)</span>
               </div>
               <span className="font-display text-lg font-bold text-primary">

@@ -17,6 +17,7 @@ interface DBProject {
   features: string[];
   tech_stack: string[];
   rating: number;
+  total_ratings: number;
   total_sales: number;
   is_published: boolean;
   created_at: any;
@@ -35,6 +36,7 @@ const mapToProject = (id: string, p: DBProject): Project => ({
   features: p.features || [],
   techStack: p.tech_stack || [],
   rating: p.rating || 0,
+  totalRatings: p.total_ratings || 0,
   totalSales: p.total_sales || 0,
   createdAt: p.created_at?.toDate ? p.created_at.toDate().toISOString() : (p.created_at || new Date().toISOString()),
 });

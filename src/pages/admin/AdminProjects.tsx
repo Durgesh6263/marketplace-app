@@ -46,6 +46,7 @@ interface DBProject {
   features: string[];
   tech_stack: string[];
   rating: number;
+  total_ratings: number;
   total_sales: number;
   is_published: boolean;
   created_at: any;
@@ -67,6 +68,7 @@ const emptyForm = {
   is_published: true,
   total_sales: "0",
   rating: "0",
+  total_ratings: "0",
 };
 
 const AdminProjects = () => {
@@ -121,6 +123,7 @@ const AdminProjects = () => {
       is_published: project.is_published,
       total_sales: (project.total_sales || 0).toString(),
       rating: (project.rating || 0).toString(),
+      total_ratings: (project.total_ratings || 0).toString(),
     });
     setDialogOpen(true);
   };
@@ -147,6 +150,7 @@ const AdminProjects = () => {
         is_published: form.is_published,
         total_sales: parseInt(form.total_sales) || 0,
         rating: parseFloat(form.rating) || 0,
+        total_ratings: parseInt(form.total_ratings) || 0,
         updated_at: serverTimestamp(),
       };
 
@@ -571,7 +575,7 @@ const AdminProjects = () => {
               </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label>Total Sales</Label>
                 <Input
@@ -582,7 +586,7 @@ const AdminProjects = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Rating Override (0-5)</Label>
+                <Label>Average Rating (0-5)</Label>
                 <Input
                   type="number"
                   step="0.1"
@@ -591,6 +595,16 @@ const AdminProjects = () => {
                   placeholder="0"
                   value={form.rating}
                   onChange={(e) => setForm({ ...form, rating: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Total Ratings Count</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={form.total_ratings}
+                  onChange={(e) => setForm({ ...form, total_ratings: e.target.value })}
                 />
               </div>
             </div>

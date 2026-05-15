@@ -39,14 +39,7 @@ const StarRating = ({ projectId, currentRating, totalRatings }: StarRatingProps)
       }
     };
 
-    const fetchCount = async () => {
-      const q = query(collection(db, "project_ratings"), where("project_id", "==", projectId));
-      const snap = await getDocs(q);
-      setRatingCount(snap.size);
-    };
-
     checkExisting();
-    fetchCount();
   }, [projectId, sessionId]);
 
   const submitRating = async (rating: number) => {
@@ -106,7 +99,7 @@ const StarRating = ({ projectId, currentRating, totalRatings }: StarRatingProps)
           ))}
         </div>
         <span className="text-sm font-medium text-foreground">{currentRating}</span>
-        <span className="text-xs text-muted-foreground">({ratingCount} ratings)</span>
+        <span className="text-xs text-muted-foreground">({totalRatings || 0} ratings)</span>
       </div>
       {userRating && (
         <p className="text-xs text-muted-foreground">You rated: {userRating}/5</p>

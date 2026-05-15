@@ -143,6 +143,7 @@ const ProjectDetail = () => {
                 <StarRating
                   projectId={project.id}
                   currentRating={project.rating}
+                  totalRatings={project.totalRatings}
                 />
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <span className="font-medium text-foreground">{project.totalSales}</span> sales
