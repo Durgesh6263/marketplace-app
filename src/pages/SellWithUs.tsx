@@ -92,11 +92,11 @@ const SellWithUs = () => {
         status: "new",
         created_at: serverTimestamp()
       });
-    } catch (error) {
+    } catch (error: any) {
       setLoading(false);
       toast({
         title: "Submission Failed",
-        description: "Something went wrong. Please try again.",
+        description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
       return;
