@@ -371,8 +371,8 @@ const AdminProjects = () => {
                     <td className="px-5 py-4 text-sm text-muted-foreground">
                       {project.total_sales || 0}
                     </td>
-                    <td className="px-5 py-4 text-sm text-muted-foreground">
-                      ⭐ {project.rating || 0}
+                    <td className="px-5 py-4 text-sm text-muted-foreground whitespace-nowrap">
+                      ⭐ {project.rating || 0} ({project.total_ratings || 0} ratings)
                     </td>
                     <td className="px-5 py-4">
                       <button
