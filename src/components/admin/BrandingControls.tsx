@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, Save, Loader2, Image, Globe } from "lucide-react";
-import { storage, db } from "@/integrations/firebase/client";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db } from "@/integrations/firebase/client";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useBranding } from "@/hooks/useBranding";
@@ -31,37 +30,67 @@ const AdminBrandingControls = () => {
     setInitialized(true);
   }
 
-  const uploadFile = async (file: File, type: "logo" | "favicon") => {
+  const uploadFile = (file: File, type: "logo" | "favicon") => {
     const setUploading = type === "logo" ? setUploadingLogo : setUploadingFavicon;
     setUploading(true);
 
-    try {
-      const ext = file.name.split(".").pop();
-      const filePath = `branding/${type}-${Date.now()}.${ext}`;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = type === "logo" ? 400 : 128;
+        const MAX_HEIGHT = type === "logo" ? 150 : 128;
+        let width = img.width;
+        let height = img.height;
 
-      const storageRef = ref(storage, filePath);
-      await uploadBytes(storageRef, file);
-      const publicUrl = await getDownloadURL(storageRef);
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        const dataUrl = canvas.toDataURL(type === "favicon" ? "image/png" : "image/jpeg", 0.8);
 
-      await setDoc(doc(db, "site_branding", "default"), {
-        [type === "logo" ? "logo_url" : "favicon_url"]: publicUrl,
-        updated_at: serverTimestamp(),
-      }, { merge: true });
+        try {
+          await setDoc(doc(db, "site_branding", "default"), {
+            [type === "logo" ? "logo_url" : "favicon_url"]: dataUrl,
+            updated_at: serverTimestamp(),
+          }, { merge: true });
 
-      queryClient.invalidateQueries({ queryKey: ["site-branding"] });
-      toast({
-        title: `${type === "logo" ? "Logo" : "Favicon"} Updated`,
-        description: "Changes will reflect across the website.",
-      });
-    } catch (err: any) {
-      toast({
-        title: "Upload Failed",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
+          queryClient.invalidateQueries({ queryKey: ["site-branding"] });
+          toast({
+            title: `${type === "logo" ? "Logo" : "Favicon"} Updated`,
+            description: "Changes will reflect across the website.",
+          });
+        } catch (err: any) {
+          toast({
+            title: "Upload Failed",
+            description: err.message,
+            variant: "destructive",
+          });
+        } finally {
+          setUploading(false);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => {
+      toast({ title: "Error", description: "Failed to read image", variant: "destructive" });
       setUploading(false);
-    }
+    };
+    reader.readAsDataURL(file);
   };
 
   const saveSettings = async () => {
