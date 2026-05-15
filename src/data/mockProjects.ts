@@ -11,6 +11,7 @@ export interface Project {
   features: string[];
   techStack: string[];
   rating: number;
+  totalRatings?: number;
   totalSales: number;
   createdAt: string;
 }
