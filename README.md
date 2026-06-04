@@ -1,73 +1,124 @@
-# Welcome to your Lovable project
+# Marketplace App
 
-## Project info
+A Vite + React + TypeScript marketplace application with Firebase authentication, Firestore integration, admin dashboard controls, and payment backend support.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Key features
 
-## How can I edit this code?
+- Public marketplace pages: home, projects, categories, and project detail pages
+- Sell-with-us onboarding flow and contact submission support
+- Firebase Authentication with email/password login and optional Google sign-in support
+- Admin dashboard with protected routes for managing projects, branding, seller requests, and contact submissions
+- Realtime dashboard statistics and sales reporting
+- Firebase Cloud Functions support for backend work, including Razorpay payment integration
+- Modern UI built with Tailwind CSS, shadcn-ui components, Radix UI, and Framer Motion
 
-There are several ways of editing your application.
+## Tech stack
 
-**Use Lovable**
+- Vite
+- React 18
+- TypeScript
+- Tailwind CSS
+- Firebase (Auth, Firestore, Storage, Functions)
+- React Router DOM
+- React Query
+- shadcn-ui + Radix UI
+- Razorpay
+- Vitest + Testing Library
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Repository structure
 
-Changes made via Lovable will be committed automatically to this repo.
+- `src/` - frontend application code
+  - `pages/` - application routes and page screens
+  - `components/` - reusable UI components
+  - `hooks/` - custom React hooks, including `useAuth`
+  - `integrations/firebase/` - Firebase client initialization
+- `functions/` - Firebase Cloud Functions backend code
+- `supabase/` - optional Supabase assets and migrations (not required for the main Firebase app)
+- `firebase.json` - Firebase configuration file
+- `vite.config.ts` - Vite configuration with path aliases
 
-**Use your preferred IDE**
+## Setup
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. Install dependencies
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+```bash
+npm install
+```
 
-Follow these steps:
+2. Create a local environment file
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Create a `.env.local` file in the project root and add your Firebase config:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+```env
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. Start the development server
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+4. Open the app in your browser
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Visit `http://localhost:8080`
 
-**Use GitHub Codespaces**
+> Note: `.env.local` should never be committed to source control.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Firebase functions
 
-## What technologies are used for this project?
+The backend functions are located in `functions/`.
 
-This project is built with:
+To use them:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```bash
+cd functions
+npm install
+npm run build
+npm run serve
+```
 
-## How can I deploy this project?
+Deploy functions when ready:
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+```bash
+cd functions
+npm run deploy
+```
 
-## Can I connect a custom domain to my Lovable project?
+## Available npm scripts
 
-Yes, you can!
+- `npm run dev` — start Vite development server
+- `npm run build` — build production assets
+- `npm run build:dev` — build in development mode
+- `npm run preview` — preview production build locally
+- `npm run lint` — run ESLint
+- `npm run test` — run tests once
+- `npm run test:watch` — run tests in watch mode
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Firebase configuration
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+This app expects Firebase web credentials in environment variables. The frontend uses `src/integrations/firebase/client.ts` to initialize:
+
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+- `VITE_FIREBASE_MEASUREMENT_ID`
+
+## Admin access
+
+Admin routes are protected by `ProtectedAdminRoute` and require a Firebase-authenticated user with an admin role stored in Firestore. The app checks the `user_roles` collection to determine whether a user is an admin.
+
+## Notes
+
+- The project uses a Vite alias `@` for `src/` imports.
+- The default dev server port is `8080`.
+- The Firebase setup guide is available at `firebase_setup_guide.md`.
