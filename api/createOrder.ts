@@ -1,7 +1,23 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import Razorpay from 'razorpay';
 import admin from 'firebase-admin';
-import { db } from './firebase-admin';
+
+// Initialize Firebase Admin if it hasn't been already
+if (!admin || !admin.apps || !admin.apps.length) {
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+    });
+  } catch (error: any) {
+    console.error('Firebase admin initialization error in createOrder:', error);
+  }
+}
+
+const db = admin.firestore();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -18,11 +34,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const projectRef = db.collection("projects").doc(project_id);
     const projectDoc = await projectRef.get();
-    
+
     if (!projectDoc.exists) {
       return res.status(404).json({ error: "Project not found" });
     }
-    
+
     const project = projectDoc.data();
     const amount = project!.price * 100;
 
