@@ -1,7 +1,7 @@
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 
 // Initialize Firebase Admin if it hasn't been already
-if (!admin.apps.length) {
+if (!admin || !admin.apps || !admin.apps.length) {
   try {
     admin.initializeApp({
       credential: admin.credential.cert({
@@ -10,8 +10,8 @@ if (!admin.apps.length) {
         privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
       }),
     });
-  } catch (error) {
-    console.log('Firebase admin initialization error', error.stack);
+  } catch (error: any) {
+    console.log('Firebase admin initialization error', error?.stack || error);
   }
 }
 

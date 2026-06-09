@@ -16,6 +16,8 @@ const Navbar = () => {
     { to: "/", label: "Home" },
     { to: "/projects", label: "Projects" },
     { to: "/categories", label: "Categories" },
+    { to: "/sell-with-us", label: "Sell with Us" },
+    { to: "/seller", label: "Seller Portal" },
   ];
 
   return (

@@ -69,6 +69,8 @@ const emptyForm = {
   total_sales: "0",
   rating: "0",
   total_ratings: "0",
+  status: "Approved",
+  seller_id: "",
 };
 
 const AdminProjects = () => {
@@ -81,6 +83,14 @@ const AdminProjects = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingScreenshots, setUploadingScreenshots] = useState(false);
   const { toast } = useToast();
+  const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "Approved" | "Rejected" | "Suspended">("All");
+
+  const filteredProjects = projects.filter((project) => {
+    const status = project.status || (project.is_published ? "Approved" : "Draft");
+    if (statusFilter === "All") return true;
+    if (statusFilter === "Pending") return status === "Submitted" || status === "Under Review";
+    return status === statusFilter;
+  });
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -124,6 +134,8 @@ const AdminProjects = () => {
       total_sales: (project.total_sales || 0).toString(),
       rating: (project.rating || 0).toString(),
       total_ratings: (project.total_ratings || 0).toString(),
+      status: (project as any).status || (project.is_published ? "Approved" : "Draft"),
+      seller_id: (project as any).seller_id || "",
     });
     setDialogOpen(true);
   };
@@ -135,6 +147,13 @@ const AdminProjects = () => {
     }
     setSaving(true);
     try {
+      const oldStatus = editingProject?.status;
+      const newStatus = (form as any).status || "Approved";
+      
+      // Auto-publish if approved, auto-unpublish if unapproved status is selected
+      const finalIsPublished = newStatus === "Approved" ? true : 
+        (["Draft", "Submitted", "Under Review", "Rejected", "Suspended"].includes(newStatus) ? false : form.is_published);
+
       const payload = {
         title: form.title.trim(),
         short_description: form.short_description.trim(),
@@ -147,7 +166,9 @@ const AdminProjects = () => {
         thumbnail: form.thumbnail.trim(),
         projectImages: form.projectImages,
         download_url: form.download_url.trim(),
-        is_published: form.is_published,
+        is_published: finalIsPublished,
+        status: newStatus,
+        seller_id: (form as any).seller_id || "",
         total_sales: parseInt(form.total_sales) || 0,
         rating: parseFloat(form.rating) || 0,
         total_ratings: parseInt(form.total_ratings) || 0,
@@ -156,6 +177,30 @@ const AdminProjects = () => {
 
       if (editingProject) {
         await updateDoc(doc(db, "projects", editingProject.id), payload);
+
+        // Notify seller if status changed
+        const sellerId = (editingProject as any).seller_id;
+        if (sellerId && sellerId !== "admin" && oldStatus !== newStatus) {
+          try {
+            await addDoc(collection(db, "seller_notifications"), {
+              seller_id: sellerId,
+              title: newStatus === "Approved" ? "Project Approved! 🎉" : newStatus === "Rejected" ? "Project Rejected ❌" : "Project Status Update ℹ️",
+              message: newStatus === "Approved" 
+                ? `Congratulations! Your project "${editingProject.title}" has been approved and is now live on the marketplace.`
+                : newStatus === "Rejected" 
+                ? `Your project "${editingProject.title}" was not approved by the admin. Please verify details and resubmit.`
+                : `Your project "${editingProject.title}" status has been updated to "${newStatus}".`,
+              type: newStatus.toLowerCase(),
+              read: false,
+              project_id: editingProject.id,
+              project_title: editingProject.title,
+              created_at: serverTimestamp()
+            });
+          } catch (err) {
+            console.error("Error creating seller notification:", err);
+          }
+        }
+
         toast({ title: "Updated", description: "Project updated successfully." });
       } else {
         await addDoc(collection(db, "projects"), {
@@ -316,6 +361,32 @@ const AdminProjects = () => {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex flex-wrap gap-2 border-b border-border pb-4 mb-6">
+        {(["All", "Pending", "Approved", "Rejected", "Suspended"] as const).map((tab) => {
+          const count = projects.filter((project) => {
+            const status = project.status || (project.is_published ? "Approved" : "Draft");
+            if (tab === "All") return true;
+            if (tab === "Pending") return status === "Submitted" || status === "Under Review";
+            return status === tab;
+          }).length;
+          
+          return (
+            <button
+              key={tab}
+              onClick={() => setStatusFilter(tab)}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors border ${
+                statusFilter === tab
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card text-muted-foreground border-border hover:bg-secondary hover:text-foreground"
+              }`}
+            >
+              {tab === "All" ? "All Projects" : tab} ({count})
+            </button>
+          );
+        })}
+      </div>
+
       {/* Projects Table */}
       {loading ? (
         <div className="space-y-4">
@@ -329,6 +400,10 @@ const AdminProjects = () => {
           <Button variant="hero" size="sm" onClick={openAddDialog}>
             <Plus className="mr-2 h-4 w-4" /> Add Your First Project
           </Button>
+        </div>
+      ) : filteredProjects.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card p-12 text-center">
+          <p className="text-muted-foreground font-body">No projects found in this tab.</p>
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -346,7 +421,7 @@ const AdminProjects = () => {
                 </tr>
               </thead>
               <tbody>
-                {projects.map((project, index) => (
+                {filteredProjects.map((project, index) => (
                   <motion.tr
                     key={project.id}
                     initial={{ opacity: 0 }}
@@ -375,20 +450,32 @@ const AdminProjects = () => {
                       ⭐ {project.rating || 0} ({project.total_ratings || 0} ratings)
                     </td>
                     <td className="px-5 py-4">
-                      <button
-                        onClick={() => togglePublish(project)}
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
-                          project.is_published
-                            ? "bg-primary/10 text-primary"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {project.is_published ? (
-                          <><Eye className="h-3 w-3" /> Published</>
-                        ) : (
-                          <><EyeOff className="h-3 w-3" /> Draft</>
-                        )}
-                      </button>
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          project.status === "Approved" ? "bg-primary/15 text-primary border border-primary/20" :
+                          project.status === "Submitted" ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
+                          project.status === "Under Review" ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" :
+                          project.status === "Rejected" ? "bg-destructive/10 text-destructive border border-destructive/20" :
+                          project.status === "Suspended" ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20" :
+                          "bg-muted text-muted-foreground"
+                        }`}>
+                          {project.status || (project.is_published ? "Approved" : "Draft")}
+                        </span>
+                        <button
+                          onClick={() => togglePublish(project)}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-medium transition-colors ${
+                            project.is_published
+                              ? "bg-primary/10 text-primary"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {project.is_published ? (
+                            <><Eye className="h-3 w-3" /> Published</>
+                          ) : (
+                            <><EyeOff className="h-3 w-3" /> Hidden</>
+                          )}
+                        </button>
+                      </div>
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex gap-1">
@@ -470,6 +557,32 @@ const AdminProjects = () => {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Status *</Label>
+                <Select value={(form as any).status || "Approved"} onValueChange={(val) => setForm({ ...form, status: val })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["Draft", "Submitted", "Under Review", "Approved", "Rejected", "Suspended"].map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Seller ID (Optional)</Label>
+                <Input
+                  placeholder="Paste user UID if uploaded by seller"
+                  value={(form as any).seller_id || ""}
+                  onChange={(e) => setForm({ ...form, seller_id: e.target.value })}
+                />
               </div>
             </div>
 

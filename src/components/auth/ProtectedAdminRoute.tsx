@@ -15,20 +15,8 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!user) {
+  if (!user || !isAdmin) {
     return <Navigate to="/admin/login" replace />;
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="text-center space-y-4">
-          <h1 className="font-display text-2xl font-bold text-foreground">Access Denied</h1>
-          <p className="text-muted-foreground">You don't have admin permissions.</p>
-          <a href="/" className="text-primary hover:underline text-sm">Go back to homepage</a>
-        </div>
-      </div>
-    );
   }
 
   return <>{children}</>;

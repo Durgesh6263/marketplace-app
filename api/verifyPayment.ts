@@ -1,20 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-
-const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY,
-  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.VITE_FIREBASE_APP_ID,
-  measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID
-};
-
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import admin from 'firebase-admin';
+import { db } from './firebase-admin';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -34,22 +21,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: "Invalid payment signature" });
     }
 
-    const orderRef = doc(db, "orders", order_id);
-    await updateDoc(orderRef, {
+    const orderRef = db.collection("orders").doc(order_id);
+    const orderDoc = await orderRef.get();
+    
+    if (!orderDoc.exists) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    const orderData = orderDoc.data();
+
+    const projectRef = db.collection("projects").doc(orderData!.project_id);
+    const projectDoc = await projectRef.get();
+    
+    if (!projectDoc.exists) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+    const projectData = projectDoc.data();
+
+    // Compute commission split: 40% seller, 60% platform
+    const price = orderData!.amount || projectData?.price || 0;
+    const seller_id = projectData?.seller_id || "admin";
+    const seller_earning = price * 0.4;
+    const platform_earning = price * 0.6;
+
+    // Update order with paid state and earnings details
+    await orderRef.update({
       status: "paid",
       razorpay_payment_id,
-      updated_at: serverTimestamp()
+      seller_id,
+      seller_earning,
+      platform_earning,
+      updated_at: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    const orderDoc = await getDoc(orderRef);
-    const projectRef = doc(db, "projects", orderDoc.data()!.project_id);
-    const projectDoc = await getDoc(projectRef);
+    // Increment sales count on the project
+    const currentSales = projectData?.total_sales || 0;
+    await projectRef.update({
+      total_sales: currentSales + 1,
+      updated_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Write a notification for the seller
+    if (seller_id && seller_id !== "admin") {
+      try {
+        await db.collection("seller_notifications").add({
+          seller_id,
+          title: "Project Sold! 💰",
+          message: `Great news! Your project "${projectData?.title || "Unknown"}" has been purchased. You earned ₹${seller_earning.toLocaleString()}.`,
+          type: "sold",
+          read: false,
+          project_id: orderData!.project_id,
+          project_title: projectData?.title || "Unknown Project",
+          created_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (err) {
+        console.error("Error creating seller notification:", err);
+      }
+    }
 
     return res.status(200).json({
       success: true,
       order_id,
-      project_title: projectDoc.data()!.title,
-      download_url: projectDoc.data()!.download_url
+      project_title: projectData?.title || "Project",
+      download_url: projectData?.download_url || ""
     });
   } catch (error: any) {
     console.error("Verify Payment Error:", error);
