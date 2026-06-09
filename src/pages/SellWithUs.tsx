@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from "@/integrations/firebase/client";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { z } from "zod";
+import { useAuth } from "@/hooks/useAuth";
+import { Link } from "react-router-dom";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be under 100 characters"),
@@ -43,6 +45,7 @@ const benefits = [
 ];
 
 const SellWithUs = () => {
+  const { user, isSeller, isAdmin } = useAuth();
   const [formData, setFormData] = useState<ContactFormData>({
     name: "",
     email: "",
@@ -126,9 +129,32 @@ const SellWithUs = () => {
                 Sell Your Project on{" "}
                 <span className="text-gradient-green">The Last Minute Project</span>
               </h1>
-              <p className="mt-4 mx-auto max-w-xl text-muted-foreground">
+              <p className="mt-4 mx-auto max-w-xl text-muted-foreground font-body">
                 Submit your project details and we'll list it on our marketplace. You earn a commission on every sale — zero upfront cost.
               </p>
+            </motion.div>
+
+            {/* Seller Portal Call to Actions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12 max-w-md mx-auto"
+            >
+              {user && (isSeller || isAdmin) ? (
+                <Button variant="hero" size="lg" className="w-full font-display font-semibold transition-all hover:glow-green" asChild>
+                  <Link to="/seller">Go to Seller Dashboard</Link>
+                </Button>
+              ) : (
+                <>
+                  <Button variant="hero" size="lg" className="w-full font-display font-semibold transition-all hover:glow-green" asChild>
+                    <Link to="/seller/signup">Become a Seller</Link>
+                  </Button>
+                  <Button variant="outline-glow" size="lg" className="w-full font-display font-semibold" asChild>
+                    <Link to="/seller/login">Seller Login</Link>
+                  </Button>
+                </>
+              )}
             </motion.div>
 
             {/* Benefits */}

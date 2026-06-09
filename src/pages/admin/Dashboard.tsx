@@ -35,6 +35,8 @@ import AdminBrandingControls from "@/components/admin/BrandingControls";
 import MonthlySalesChart from "@/components/admin/MonthlySalesChart";
 import RecentOrdersTable from "@/components/admin/RecentOrdersTable";
 import TopSellingProjects from "@/components/admin/TopSellingProjects";
+import AdminUsers from "@/components/admin/AdminUsers";
+import AdminOrders from "@/components/admin/AdminOrders";
 
 const sidebarLinks = [
   { icon: LayoutDashboard, label: "Dashboard", to: "/admin" },
@@ -58,30 +60,49 @@ const AdminDashboard = () => {
   useDashboardRealtime();
   const statCards = [
     {
+      label: "Total Users",
+      value: stats?.totalUsers ?? "—",
+      change: "All accounts",
+    },
+    {
+      label: "Total Buyers",
+      value: stats?.totalBuyers ?? "—",
+      change: "Customer base",
+    },
+    {
+      label: "Total Sellers",
+      value: stats?.totalSellers ?? "—",
+      change: "Merchant base",
+    },
+    {
       label: "Total Projects",
       value: stats?.totalProjects ?? "—",
-      change: "From database",
+      change: "Listed products",
     },
     {
-      label: "Revenue",
-      value: stats ? `₹${stats.totalSalesAmount.toLocaleString()}` : "—",
-      change: "Total earnings",
+      label: "Pending Review",
+      value: stats?.pendingProjects ?? "—",
+      change: "Awaiting approval",
     },
     {
-      label: "Units Sold",
-      value: stats?.totalPaidOrders ?? "—",
-      change: "Click for details",
-      onClick: () => setUnitsModalOpen(true),
+      label: "Approved Projects",
+      value: stats?.approvedProjects ?? "—",
+      change: "Live on market",
     },
     {
-      label: "Active Users",
-      value: stats?.activeUsers ?? "—",
-      change: "Registered accounts",
+      label: "Rejected Projects",
+      value: stats?.rejectedProjects ?? "—",
+      change: "Not approved",
     },
     {
-      label: "Downloads",
-      value: stats?.totalDownloads ?? "—",
-      change: "Successful payments",
+      label: "Total Orders",
+      value: stats?.totalOrders ?? "—",
+      change: "Paid & pending",
+    },
+    {
+      label: "Total Revenue",
+      value: stats ? `₹${stats.totalRevenue.toLocaleString()}` : "—",
+      change: "Gross earnings",
     },
   ];
 
@@ -95,6 +116,10 @@ const AdminDashboard = () => {
         return <AdminContactSubmissions />;
       case "/admin/branding":
         return <AdminBrandingControls />;
+      case "/admin/users":
+        return <AdminUsers />;
+      case "/admin/orders":
+        return <AdminOrders />;
       default:
         return (
           <>
@@ -106,7 +131,7 @@ const AdminDashboard = () => {
               {isLoading && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-8">
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-8">
               {statCards.map((stat, i) => (
                 <motion.div
                   key={stat.label}

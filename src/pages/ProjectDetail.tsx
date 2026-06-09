@@ -137,17 +137,17 @@ const ProjectDetail = () => {
               {project.projectImages && project.projectImages.length > 0 && (
                 <div className="mt-8">
                   <h3 className="font-display text-xl font-bold text-foreground mb-4">Screenshots</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {project.projectImages.map((url, i) => (
                       <Dialog key={i}>
                         <DialogTrigger asChild>
-                          <button className="relative aspect-video overflow-hidden rounded-xl border border-border bg-secondary transition-all hover:opacity-90 hover:ring-2 hover:ring-primary/50 focus:outline-none shadow-sm group">
-                            <img src={url} alt={`${project.title} screenshot ${i + 1}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                          <button className="relative aspect-video overflow-hidden rounded-xl border border-border bg-secondary transition-all hover:shadow-md hover:ring-2 hover:ring-primary/50 focus:outline-none group">
+                            <img src={url} alt={`${project.title} screenshot ${i + 1}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                             <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
                           </button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-5xl w-[90vw] bg-background/95 backdrop-blur-md border-border p-1 overflow-hidden">
-                          <img src={url} alt={`${project.title} screenshot ${i + 1}`} className="w-full h-auto max-h-[85vh] object-contain rounded-md" />
+                        <DialogContent className="max-w-5xl w-[95vw] sm:w-[90vw] p-0 bg-transparent border-none shadow-none flex items-center justify-center">
+                          <img src={url} alt={`${project.title} screenshot ${i + 1}`} className="w-full h-auto max-h-[90vh] object-contain rounded-lg shadow-2xl" />
                         </DialogContent>
                       </Dialog>
                     ))}

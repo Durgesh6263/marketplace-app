@@ -39,6 +39,14 @@ export interface DashboardStats {
   monthlySales: MonthlySales[];
   recentOrders: RecentOrder[];
   unitsSoldBreakdown: UnitSoldBreakdown[];
+  totalUsers: number;
+  totalBuyers: number;
+  totalSellers: number;
+  pendingProjects: number;
+  approvedProjects: number;
+  rejectedProjects: number;
+  totalOrders: number;
+  totalRevenue: number;
 }
 
 export const useDashboardStats = () => {
@@ -54,6 +62,12 @@ export const useDashboardStats = () => {
       let totalSalesAmount = 0;
       let totalPaidOrders = 0;
       let totalDownloads = 0;
+      let pendingProjectsCount = 0;
+      let approvedProjectsCount = 0;
+      let rejectedProjectsCount = 0;
+      let buyersCount = 0;
+      let sellersCount = 0;
+      
       const recentOrders: RecentOrder[] = [];
       const monthlySalesMap: Record<string, MonthlySales> = {};
       const unitsBreakdownMap: Record<string, UnitSoldBreakdown> = {};
@@ -61,6 +75,17 @@ export const useDashboardStats = () => {
       projectsSnap.forEach(doc => {
         const data = doc.data();
         totalDownloads += (data.total_sales || 0);
+        
+        // Count project status breakdown
+        const status = (data.status || (data.is_published ? "Approved" : "Draft")).toLowerCase();
+        if (status === "approved") {
+          approvedProjectsCount++;
+        } else if (status === "submitted" || status === "under review") {
+          pendingProjectsCount++;
+        } else if (status === "rejected") {
+          rejectedProjectsCount++;
+        }
+
         unitsBreakdownMap[doc.id] = { 
           project_id: doc.id,
           project_title: data.title || "Unknown", 
@@ -69,6 +94,16 @@ export const useDashboardStats = () => {
           revenue: 0,
           last_purchase_date: null
         };
+      });
+
+      // Count user roles
+      usersSnap.forEach(doc => {
+        const data = doc.data();
+        if (data.role === "seller") {
+          sellersCount++;
+        } else if (data.role === "user" || !data.role) {
+          buyersCount++;
+        }
       });
 
       ordersSnap.forEach(doc => {
@@ -127,7 +162,15 @@ export const useDashboardStats = () => {
         activeUsers: usersSnap.size,
         monthlySales,
         recentOrders,
-        unitsSoldBreakdown
+        unitsSoldBreakdown,
+        totalUsers: usersSnap.size,
+        totalBuyers: buyersCount,
+        totalSellers: sellersCount,
+        pendingProjects: pendingProjectsCount,
+        approvedProjects: approvedProjectsCount,
+        rejectedProjects: rejectedProjectsCount,
+        totalOrders: ordersSnap.size,
+        totalRevenue: totalSalesAmount,
       };
     },
     refetchInterval: 30000,

@@ -15,6 +15,12 @@ import SellWithUs from "./pages/SellWithUs";
 import ProtectedAdminRoute from "./components/auth/ProtectedAdminRoute";
 import NotFound from "./pages/NotFound";
 
+import SellerLogin from "./pages/seller/auth/SellerLogin";
+import SellerSignup from "./pages/seller/auth/SellerSignup";
+import ForgotPassword from "./pages/seller/auth/ForgotPassword";
+import SellerDashboard from "./pages/seller/Dashboard";
+import ProtectedSellerRoute from "./components/auth/ProtectedSellerRoute";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -30,9 +36,19 @@ const App = () => (
             <Route path="/projects" element={<Projects />} />
             <Route path="/project/:id" element={<ProjectDetail />} />
             <Route path="/categories" element={<Categories />} />
+            
+            {/* Admin Portal */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
             <Route path="/admin/*" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
+            
+            {/* Seller Portal */}
+            <Route path="/seller/login" element={<SellerLogin />} />
+            <Route path="/seller/signup" element={<SellerSignup />} />
+            <Route path="/seller/forgot-password" element={<ForgotPassword />} />
+            <Route path="/seller" element={<ProtectedSellerRoute><SellerDashboard /></ProtectedSellerRoute>} />
+            <Route path="/seller/*" element={<ProtectedSellerRoute><SellerDashboard /></ProtectedSellerRoute>} />
+
             <Route path="/sell-with-us" element={<SellWithUs />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

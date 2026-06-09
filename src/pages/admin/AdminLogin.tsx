@@ -13,7 +13,7 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUpAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -22,7 +22,7 @@ const AdminLogin = () => {
     setLoading(true);
 
     if (isSignUp) {
-      const { error } = await signUp(email, password);
+      const { error } = await signUpAdmin(email, password);
       if (error) {
         toast({ title: "Sign Up Failed", description: error.message, variant: "destructive" });
         setLoading(false);
