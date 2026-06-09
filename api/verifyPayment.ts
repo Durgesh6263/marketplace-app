@@ -39,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const orderRef = db.collection("orders").doc(order_id);
     const orderDoc = await orderRef.get();
-    
+
     if (!orderDoc.exists) {
       return res.status(404).json({ error: "Order not found" });
     }
@@ -47,7 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const projectRef = db.collection("projects").doc(orderData!.project_id);
     const projectDoc = await projectRef.get();
-    
+
     if (!projectDoc.exists) {
       return res.status(404).json({ error: "Project not found" });
     }

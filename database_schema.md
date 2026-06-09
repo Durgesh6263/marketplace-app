@@ -141,12 +141,53 @@ CREATE TABLE public.seller_notifications (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+### Seller Payouts (`seller_payouts`)
+Stores payout transactions made to sellers.
+```sql
+CREATE TABLE public.seller_payouts (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    seller_id UUID REFERENCES public.user_roles(id) ON DELETE CASCADE NOT NULL,
+    amount NUMERIC NOT NULL CHECK (amount >= 0),
+    status TEXT CHECK (status IN ('pending', 'paid')) DEFAULT 'pending' NOT NULL,
+    payout_date TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- Enable RLS
-ALTER TABLE public.seller_notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.seller_payouts ENABLE ROW LEVEL SECURITY;
 
 -- Policies
-CREATE POLICY "Sellers manage own notifications" ON public.seller_notifications 
-    FOR ALL USING (auth.uid() = seller_id);
+CREATE POLICY "Admins have full access on payouts" ON public.seller_payouts
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.user_roles 
+            WHERE id = auth.uid() AND role = 'admin'
+        )
+    );
+
+CREATE POLICY "Sellers read own payouts" ON public.seller_payouts
+    FOR SELECT USING (auth.uid() = seller_id);
+```
+
+### Seller Earnings (`seller_earnings`)
+Tracks details of seller revenues and commission splits.
+```sql
+CREATE TABLE public.seller_earnings (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    seller_id UUID REFERENCES public.user_roles(id) ON DELETE CASCADE NOT NULL,
+    project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE,
+    units_sold INT DEFAULT 0,
+    revenue_generated NUMERIC DEFAULT 0,
+    seller_commission NUMERIC DEFAULT 0,
+    platform_profit NUMERIC DEFAULT 0,
+    payout_status TEXT CHECK (status IN ('pending', 'paid')) DEFAULT 'pending',
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Enable RLS
+ALTER TABLE public.seller_earnings ENABLE ROW LEVEL SECURITY;
+```
+
 ```
 
 ---
@@ -230,6 +271,17 @@ CREATE POLICY "Sellers manage own notifications" ON public.seller_notifications
 }
 ```
 
+### `seller_payouts/{payoutId}`
+```json
+{
+  "seller_id": "string",
+  "amount": 2500,
+  "status": "pending | paid",
+  "payout_date": "Timestamp | null",
+  "created_at": "Timestamp"
+}
+```
+
 ---
 
 ## 3. Firebase Security Rules
@@ -271,6 +323,12 @@ service cloud.firestore {
     // Seller Notifications
     match /seller_notifications/{notificationId} {
       allow read, write: if request.auth != null && resource.data.seller_id == request.auth.uid;
+    }
+
+    // Seller Payouts
+    match /seller_payouts/{payoutId} {
+      allow read: if request.auth != null && (resource.data.seller_id == request.auth.uid || getUserRole(request.auth.uid) == 'admin');
+      allow write: if request.auth != null && getUserRole(request.auth.uid) == 'admin';
     }
   }
 }

@@ -44,6 +44,8 @@ interface UserProfile {
   role: "user" | "seller" | "admin";
   status: "Active" | "Suspended";
   created_at?: any;
+  totalProjects?: number;
+  totalPurchases?: number;
 }
 
 interface SellerStats {
@@ -74,16 +76,44 @@ const AdminUsers = () => {
     setLoading(true);
     try {
       const snapshot = await getDocs(collection(db, "user_roles"));
+      const projectsSnap = await getDocs(collection(db, "projects"));
+      const ordersSnap = await getDocs(collection(db, "orders"));
+
+      // Pre-calculate project counts per seller
+      const sellerProjectsMap: Record<string, number> = {};
+      projectsSnap.forEach((doc) => {
+        const data = doc.data();
+        if (data.seller_id) {
+          sellerProjectsMap[data.seller_id] = (sellerProjectsMap[data.seller_id] || 0) + 1;
+        }
+      });
+
+      // Pre-calculate paid purchase counts per user email
+      const buyerPurchasesMap: Record<string, number> = {};
+      ordersSnap.forEach((doc) => {
+        const data = doc.data();
+        if ((data.status === "paid" || data.status === "completed") && data.buyer_email) {
+          const email = data.buyer_email.toLowerCase();
+          buyerPurchasesMap[email] = (buyerPurchasesMap[email] || 0) + 1;
+        }
+      });
+
       const items = snapshot.docs.map((d) => {
         const data = d.data();
+        const role = data.role || "user";
+        const email = data.email || "";
+        const id = d.id;
+
         return {
-          id: d.id,
+          id,
           name: data.name || data.email?.split("@")[0] || "Anonymous",
-          email: data.email || "",
+          email,
           phone: data.phone || "",
-          role: data.role || "user",
+          role,
           status: data.status || "Active",
-          created_at: data.created_at || null
+          created_at: data.created_at || null,
+          totalProjects: role === "seller" ? (sellerProjectsMap[id] || 0) : 0,
+          totalPurchases: buyerPurchasesMap[email.toLowerCase()] || 0,
         } as UserProfile;
       });
       setUsers(items);
@@ -288,6 +318,8 @@ const AdminUsers = () => {
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">Name</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">Email</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">Role</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body text-center">Projects</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body text-center">Purchases</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">Join Date</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">Status</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">Actions</th>
@@ -324,7 +356,13 @@ const AdminUsers = () => {
                           {userProfile.role === "user" ? "Buyer" : userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1)}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-xs text-muted-foreground font-body">
+                      <td className="px-5 py-4 text-center text-sm font-semibold text-foreground font-body">
+                        {userProfile.role === "seller" ? userProfile.totalProjects : "—"}
+                      </td>
+                      <td className="px-5 py-4 text-center text-sm font-semibold text-foreground font-body">
+                        {userProfile.totalPurchases || 0}
+                      </td>
+                      <td className="px-5 py-4 text-xs text-muted-foreground font-body font-body">
                         {formatDate(userProfile.created_at)}
                       </td>
                       <td className="px-5 py-4">

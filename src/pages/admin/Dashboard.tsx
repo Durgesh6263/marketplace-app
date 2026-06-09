@@ -26,6 +26,7 @@ import {
   Loader2,
   MessageSquare,
   Palette,
+  Coins,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import AdminSellerRequests from "./SellerRequests";
@@ -37,14 +38,15 @@ import RecentOrdersTable from "@/components/admin/RecentOrdersTable";
 import TopSellingProjects from "@/components/admin/TopSellingProjects";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminOrders from "@/components/admin/AdminOrders";
+import AdminPayouts from "@/components/admin/AdminPayouts";
+
 
 const sidebarLinks = [
   { icon: LayoutDashboard, label: "Dashboard", to: "/admin" },
   { icon: FolderOpen, label: "Projects", to: "/admin/projects" },
   { icon: Inbox, label: "Seller Requests", to: "/admin/seller-requests" },
-  { icon: MessageSquare, label: "Contact Submissions", to: "/admin/contact-submissions" },
   { icon: ShoppingCart, label: "Orders", to: "/admin/orders" },
-  { icon: Palette, label: "Branding", to: "/admin/branding" },
+  { icon: Coins, label: "Seller Payouts", to: "/admin/payouts" },
   { icon: Users, label: "Users", to: "/admin/users" },
   { icon: Settings, label: "Settings", to: "/admin/settings" },
 ];
@@ -60,19 +62,44 @@ const AdminDashboard = () => {
   useDashboardRealtime();
   const statCards = [
     {
-      label: "Total Users",
-      value: stats?.totalUsers ?? "—",
-      change: "All accounts",
+      label: "Total Revenue",
+      value: stats ? `₹${stats.totalRevenue.toLocaleString()}` : "—",
+      change: "Gross earnings",
     },
     {
-      label: "Total Buyers",
-      value: stats?.totalBuyers ?? "—",
-      change: "Customer base",
+      label: "Platform Revenue",
+      value: stats ? `₹${stats.platformRevenue.toLocaleString()}` : "—",
+      change: "60% profit share",
+    },
+    {
+      label: "Total Seller Commissions",
+      value: stats ? `₹${stats.totalSellerCommissions.toLocaleString()}` : "—",
+      change: "40% seller share",
+    },
+    {
+      label: "Paid Commissions",
+      value: stats ? `₹${stats.paidCommissions.toLocaleString()}` : "—",
+      change: "Sum of paid payouts",
+    },
+    {
+      label: "Pending Commissions",
+      value: stats ? `₹${stats.pendingCommissions.toLocaleString()}` : "—",
+      change: "Awaiting transfer",
     },
     {
       label: "Total Sellers",
       value: stats?.totalSellers ?? "—",
-      change: "Merchant base",
+      change: "Registered merchants",
+    },
+    {
+      label: "Active Sellers",
+      value: stats?.activeSellers ?? "—",
+      change: "With live sales/lists",
+    },
+    {
+      label: "Total Users",
+      value: stats?.totalUsers ?? "—",
+      change: "All accounts",
     },
     {
       label: "Total Projects",
@@ -80,29 +107,9 @@ const AdminDashboard = () => {
       change: "Listed products",
     },
     {
-      label: "Pending Review",
-      value: stats?.pendingProjects ?? "—",
-      change: "Awaiting approval",
-    },
-    {
-      label: "Approved Projects",
-      value: stats?.approvedProjects ?? "—",
-      change: "Live on market",
-    },
-    {
-      label: "Rejected Projects",
-      value: stats?.rejectedProjects ?? "—",
-      change: "Not approved",
-    },
-    {
       label: "Total Orders",
       value: stats?.totalOrders ?? "—",
       change: "Paid & pending",
-    },
-    {
-      label: "Total Revenue",
-      value: stats ? `₹${stats.totalRevenue.toLocaleString()}` : "—",
-      change: "Gross earnings",
     },
   ];
 
@@ -120,6 +127,8 @@ const AdminDashboard = () => {
         return <AdminUsers />;
       case "/admin/orders":
         return <AdminOrders />;
+      case "/admin/payouts":
+        return <AdminPayouts />;
       default:
         return (
           <>

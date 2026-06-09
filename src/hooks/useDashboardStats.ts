@@ -47,6 +47,11 @@ export interface DashboardStats {
   rejectedProjects: number;
   totalOrders: number;
   totalRevenue: number;
+  platformRevenue: number;
+  totalSellerCommissions: number;
+  paidCommissions: number;
+  pendingCommissions: number;
+  activeSellers: number;
 }
 
 export const useDashboardStats = () => {
@@ -58,6 +63,7 @@ export const useDashboardStats = () => {
       const projectsSnap = await getDocs(collection(db, "projects"));
       const ordersSnap = await getDocs(collection(db, "orders"));
       const usersSnap = await getDocs(collection(db, "user_roles"));
+      const payoutsSnap = await getDocs(collection(db, "seller_payouts"));
 
       let totalSalesAmount = 0;
       let totalPaidOrders = 0;
@@ -72,6 +78,8 @@ export const useDashboardStats = () => {
       const monthlySalesMap: Record<string, MonthlySales> = {};
       const unitsBreakdownMap: Record<string, UnitSoldBreakdown> = {};
 
+      const activeSellersSet = new Set<string>();
+
       projectsSnap.forEach(doc => {
         const data = doc.data();
         totalDownloads += (data.total_sales || 0);
@@ -80,6 +88,9 @@ export const useDashboardStats = () => {
         const status = (data.status || (data.is_published ? "Approved" : "Draft")).toLowerCase();
         if (status === "approved") {
           approvedProjectsCount++;
+          if (data.seller_id) {
+            activeSellersSet.add(data.seller_id);
+          }
         } else if (status === "submitted" || status === "under review") {
           pendingProjectsCount++;
         } else if (status === "rejected") {
@@ -106,11 +117,25 @@ export const useDashboardStats = () => {
         }
       });
 
+      let totalPlatformProfit = 0;
+      let totalSellerEarnings = 0;
+
       ordersSnap.forEach(doc => {
         const data = doc.data();
         if (data.status === "paid" || data.status === "completed") {
           totalPaidOrders++;
           totalSalesAmount += (data.amount || 0);
+
+          // Calculate commission splits: 40% seller, 60% platform
+          const platformShare = data.platform_earning !== undefined ? data.platform_earning : ((data.amount || 0) * 0.6);
+          const sellerShare = data.seller_earning !== undefined ? data.seller_earning : ((data.amount || 0) * 0.4);
+          
+          totalPlatformProfit += platformShare;
+          totalSellerEarnings += sellerShare;
+
+          if (data.seller_id) {
+            activeSellersSet.add(data.seller_id);
+          }
 
           if (data.project_id && unitsBreakdownMap[data.project_id]) {
             unitsBreakdownMap[data.project_id].units++;
@@ -147,6 +172,15 @@ export const useDashboardStats = () => {
         }
       });
 
+      // Sum paid payouts
+      let paidCommissions = 0;
+      payoutsSnap.forEach(doc => {
+        const data = doc.data();
+        if (data.status === "paid") {
+          paidCommissions += (data.amount || 0);
+        }
+      });
+
       const monthlySales = Object.values(monthlySalesMap).sort((a, b) => a.month.localeCompare(b.month));
       recentOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       
@@ -171,6 +205,11 @@ export const useDashboardStats = () => {
         rejectedProjects: rejectedProjectsCount,
         totalOrders: ordersSnap.size,
         totalRevenue: totalSalesAmount,
+        platformRevenue: totalPlatformProfit,
+        totalSellerCommissions: totalSellerEarnings,
+        paidCommissions,
+        pendingCommissions: Math.max(0, totalSellerEarnings - paidCommissions),
+        activeSellers: activeSellersSet.size,
       };
     },
     refetchInterval: 30000,
@@ -189,9 +228,14 @@ export const useDashboardRealtime = () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
     });
 
+    const unsubPayouts = onSnapshot(collection(db, "seller_payouts"), () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    });
+
     return () => {
       unsubOrders();
       unsubProjects();
+      unsubPayouts();
     };
   }, [queryClient]);
 };
