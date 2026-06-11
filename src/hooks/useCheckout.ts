@@ -51,9 +51,16 @@ export const useCheckout = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ project_id: projectId, buyer_email: buyerEmail, buyer_name: buyerName, buyer_phone: buyerPhone })
       });
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+         const text = await response.text();
+         console.error('Non-JSON response from createOrder:', text);
+         throw new Error('Server returned an invalid response. Please try again later.');
+      }
+
       const data = await response.json();
-      if (!response.ok || data.error) throw new Error(data.error || 'Failed to create order');
-      return data as OrderResponse;
+      if (!response.ok || !data.success) throw new Error(data.message || 'Failed to create order');
+      return data.data as OrderResponse;
     },
     []
   );
@@ -70,9 +77,16 @@ export const useCheckout = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(params)
       });
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+         const text = await response.text();
+         console.error('Non-JSON response from verifyPayment:', text);
+         throw new Error('Server returned an invalid response. Please try again later.');
+      }
+
       const data = await response.json();
-      if (!response.ok || data.error) throw new Error(data.error || 'Verification failed');
-      return data as VerifyResponse;
+      if (!response.ok || !data.success) throw new Error(data.message || 'Verification failed');
+      return data.data as VerifyResponse;
     },
     []
   );

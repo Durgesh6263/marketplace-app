@@ -1,12 +1,13 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import Razorpay from 'razorpay';
-import admin from 'firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin if it hasn't been already
-if (!admin || !admin.apps || !admin.apps.length) {
+if (!getApps().length) {
   try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
+    initializeApp({
+      credential: cert({
         projectId: process.env.VITE_FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
@@ -17,16 +18,20 @@ if (!admin || !admin.apps || !admin.apps.length) {
   }
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  const { project_id, buyer_email, buyer_name, buyer_phone } = req.body;
-
   try {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ success: false, message: 'Method Not Allowed' });
+    }
+
+    const { project_id, buyer_email, buyer_name, buyer_phone } = req.body || {};
+    
+    if (!project_id || !buyer_email) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID || "rzp_live_SojdpFjfALNMvp",
       key_secret: process.env.RAZORPAY_KEY_SECRET || "o3jrSQSUAf9CA9kg4MdWcAyz",
@@ -36,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const projectDoc = await projectRef.get();
 
     if (!projectDoc.exists) {
-      return res.status(404).json({ error: "Project not found" });
+      return res.status(404).json({ success: false, message: "Project not found" });
     }
 
     const project = projectDoc.data();
@@ -58,19 +63,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       status: "pending",
       razorpay_order_id: order.id,
       seller_id: project!.seller_id || "admin",
-      created_at: admin.firestore.FieldValue.serverTimestamp()
+      created_at: FieldValue.serverTimestamp()
     });
 
     return res.status(200).json({
-      order_id: orderRef.id,
-      razorpay_order_id: order.id,
-      razorpay_key_id: process.env.RAZORPAY_KEY_ID || "rzp_live_SojdpFjfALNMvp",
-      amount,
-      currency: "INR",
-      project_title: project!.title
+      success: true,
+      message: "Payment order created",
+      data: {
+        order_id: orderRef.id,
+        razorpay_order_id: order.id,
+        razorpay_key_id: process.env.RAZORPAY_KEY_ID || "rzp_live_SojdpFjfALNMvp",
+        amount,
+        currency: "INR",
+        project_title: project!.title
+      }
     });
   } catch (error: any) {
     console.error("Create Order Error:", error);
-    return res.status(500).json({ error: error.message || "Internal Server Error" });
+    return res.status(500).json({ success: false, message: error.message || "Internal Server Error" });
   }
 }

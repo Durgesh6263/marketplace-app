@@ -1,12 +1,13 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
-import admin from 'firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin if it hasn't been already
-if (!admin || !admin.apps || !admin.apps.length) {
+if (!getApps().length) {
   try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
+    initializeApp({
+      credential: cert({
         projectId: process.env.VITE_FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
@@ -17,16 +18,20 @@ if (!admin || !admin.apps || !admin.apps.length) {
   }
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, order_id } = req.body;
-
   try {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ success: false, message: 'Method Not Allowed' });
+    }
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, order_id } = req.body || {};
+    
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !order_id) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "o3jrSQSUAf9CA9kg4MdWcAyz")
@@ -34,14 +39,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .digest("hex");
 
     if (expectedSignature !== razorpay_signature) {
-      return res.status(400).json({ error: "Invalid payment signature" });
+      return res.status(400).json({ success: false, message: "Invalid payment signature" });
     }
 
     const orderRef = db.collection("orders").doc(order_id);
     const orderDoc = await orderRef.get();
 
     if (!orderDoc.exists) {
-      return res.status(404).json({ error: "Order not found" });
+      return res.status(404).json({ success: false, message: "Order not found" });
     }
     const orderData = orderDoc.data();
 
@@ -49,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const projectDoc = await projectRef.get();
 
     if (!projectDoc.exists) {
-      return res.status(404).json({ error: "Project not found" });
+      return res.status(404).json({ success: false, message: "Project not found" });
     }
     const projectData = projectDoc.data();
 
@@ -66,14 +71,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       seller_id,
       seller_earning,
       platform_earning,
-      updated_at: admin.firestore.FieldValue.serverTimestamp()
+      updated_at: FieldValue.serverTimestamp()
     });
 
     // Increment sales count on the project
     const currentSales = projectData?.total_sales || 0;
     await projectRef.update({
       total_sales: currentSales + 1,
-      updated_at: admin.firestore.FieldValue.serverTimestamp()
+      updated_at: FieldValue.serverTimestamp()
     });
 
     // Write a notification for the seller
@@ -87,7 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           read: false,
           project_id: orderData!.project_id,
           project_title: projectData?.title || "Unknown Project",
-          created_at: admin.firestore.FieldValue.serverTimestamp()
+          created_at: FieldValue.serverTimestamp()
         });
       } catch (err) {
         console.error("Error creating seller notification:", err);
@@ -96,12 +101,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({
       success: true,
-      order_id,
-      project_title: projectData?.title || "Project",
-      download_url: projectData?.download_url || ""
+      message: "Payment verified",
+      data: {
+        order_id,
+        project_title: projectData?.title || "Project",
+        download_url: projectData?.download_url || ""
+      }
     });
   } catch (error: any) {
     console.error("Verify Payment Error:", error);
-    return res.status(500).json({ error: error.message || "Internal Server Error" });
+    return res.status(500).json({ success: false, message: error.message || "Internal Server Error" });
   }
 }
