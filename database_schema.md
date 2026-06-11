@@ -282,6 +282,51 @@ ALTER TABLE public.seller_earnings ENABLE ROW LEVEL SECURITY;
 }
 ```
 
+### `site_settings/default`
+```json
+{
+  "general": {
+    "website_name": "string",
+    "tagline": "string",
+    "description": "string",
+    "contact_email": "string",
+    "contact_phone": "string",
+    "address": "string"
+  },
+  "logo": {
+    "logo_url": "string | null",
+    "favicon_url": "string | null"
+  },
+  "branding": {
+    "primary_color": "string (HSL)",
+    "secondary_color": "string (HSL)",
+    "button_color": "string (HSL)",
+    "theme_mode": "string"
+  },
+  "homepage": {
+    "hero_title": "string",
+    "hero_subtitle": "string",
+    "cta_text": "string",
+    "features_title": "string",
+    "features_description": "string",
+    "seller_commission_pct": "number",
+    "seller_benefits": ["string"]
+  },
+  "social": {
+    "linkedin": "string",
+    "instagram": "string",
+    "facebook": "string",
+    "youtube": "string",
+    "twitter": "string"
+  },
+  "seo": {
+    "meta_title": "string",
+    "meta_description": "string",
+    "keywords": "string"
+  }
+}
+```
+
 ---
 
 ## 3. Firebase Security Rules
