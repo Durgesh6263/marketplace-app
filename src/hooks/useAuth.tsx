@@ -7,7 +7,7 @@ import {
   signOut as firebaseSignOut,
   User 
 } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 
 import { sendPasswordResetEmail } from "firebase/auth";
 
@@ -150,6 +150,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUpAdmin = async (email: string, password: string) => {
     try {
+      // Check if an admin already exists
+      const q = query(collection(db, "user_roles"), where("role", "==", "admin"));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        return { error: new Error("Only one Admin account is allowed.") };
+      }
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       // Create an admin role entry in Firestore
       await setDoc(doc(db, "user_roles", userCredential.user.uid), {

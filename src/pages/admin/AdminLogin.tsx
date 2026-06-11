@@ -12,8 +12,7 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const { signIn, signUpAdmin } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -21,24 +20,13 @@ const AdminLogin = () => {
     e.preventDefault();
     setLoading(true);
 
-    if (isSignUp) {
-      const { error } = await signUpAdmin(email, password);
-      if (error) {
-        toast({ title: "Sign Up Failed", description: error.message, variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-      toast({ title: "Account Created!", description: "You are now signed in as admin." });
-      navigate("/admin");
-    } else {
-      const { error } = await signIn(email, password);
-      if (error) {
-        toast({ title: "Login Failed", description: error.message, variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-      navigate("/admin");
+    const { error } = await signIn(email, password);
+    if (error) {
+      toast({ title: "Login Failed", description: error.message, variant: "destructive" });
+      setLoading(false);
+      return;
     }
+    navigate("/admin");
     setLoading(false);
   };
 
@@ -58,12 +46,10 @@ const AdminLogin = () => {
           </div>
 
           <h1 className="font-display text-2xl font-bold text-foreground text-center mb-1">
-            Admin {isSignUp ? "Sign Up" : "Login"}
+            Admin Login
           </h1>
           <p className="text-sm text-muted-foreground text-center mb-8">
-            {isSignUp
-              ? "Create your admin account (first signup becomes admin)"
-              : "Sign in to manage ProjectExchange"}
+            Sign in to manage ProjectExchange
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -109,21 +95,10 @@ const AdminLogin = () => {
             >
               {loading
                 ? "Please wait..."
-                : isSignUp
-                ? (<><UserPlus className="mr-2 h-4 w-4" /> Create Admin Account</>)
                 : (<><Lock className="mr-2 h-4 w-4" /> Sign In</>)
               }
             </Button>
           </form>
-
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              {isSignUp ? "Already have an account? Sign In" : "First time? Create Admin Account"}
-            </button>
-          </div>
         </div>
       </motion.div>
     </div>

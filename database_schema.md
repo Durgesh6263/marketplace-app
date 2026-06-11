@@ -299,7 +299,12 @@ service cloud.firestore {
     // User Profiles
     match /user_roles/{userId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId && request.resource.data.role != 'admin';
+      allow update: if request.auth != null && (
+        (request.auth.uid == userId && request.resource.data.role == resource.data.role) || 
+        getUserRole(request.auth.uid) == 'admin'
+      );
+      allow delete: if request.auth != null && getUserRole(request.auth.uid) == 'admin';
     }
 
     // Projects
