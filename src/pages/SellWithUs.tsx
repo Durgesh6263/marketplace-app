@@ -13,7 +13,6 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
-import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be under 100 characters"),
@@ -47,7 +46,6 @@ const benefits = [
 
 const SellWithUs = () => {
   const { user, isSeller, isAdmin } = useAuth();
-  const { data: settings } = useSiteSettings();
   const [formData, setFormData] = useState<ContactFormData>({
     name: "",
     email: "",
@@ -132,7 +130,7 @@ const SellWithUs = () => {
                 <span className="text-gradient-green">The Last Minute Project</span>
               </h1>
               <p className="mt-4 mx-auto max-w-xl text-muted-foreground font-body">
-                Submit your project details and we'll list it on our marketplace. You earn a {settings?.homepage.seller_commission_pct || 60}% commission on every sale — zero upfront cost.
+                Submit your project details and we'll list it on our marketplace. You earn a commission on every sale — zero upfront cost.
               </p>
             </motion.div>
 

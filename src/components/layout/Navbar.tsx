@@ -3,14 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useBranding } from "@/hooks/useBranding";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const { data: settings } = useSiteSettings();
+  const { data: branding } = useBranding();
 
-  const siteName = settings?.general.website_name || "The Last Minute Project";
+  const siteName = branding?.site_name || "The Last Minute Project";
 
   const navLinks = [
     { to: "/", label: "Home" },
@@ -25,8 +25,8 @@ const Navbar = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          {settings?.logo.logo_url ? (
-            <img src={settings.logo.logo_url} alt={siteName} className="h-8 max-w-[140px] object-contain" />
+          {branding?.logo_url ? (
+            <img src={branding.logo_url} alt={siteName} className="h-8 max-w-[140px] object-contain" />
           ) : (
             <div className="h-8 w-8 rounded-lg bg-gradient-green" />
           )}

@@ -1,14 +1,13 @@
 import { Link } from "react-router-dom";
 import { Phone, Mail } from "lucide-react";
-import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useBranding } from "@/hooks/useBranding";
 
 const Footer = () => {
-  const { data: settings } = useSiteSettings();
+  const { data: branding } = useBranding();
 
-  const siteName = settings?.general.website_name || "The Last Minute Project";
-  const tagline = settings?.general.tagline || "Your marketplace for academic and professional projects. Buy, sell, and collaborate.";
-  const supportEmail = settings?.general.contact_email || "omjatale62@gmail.com";
-  const contactPhone = settings?.general.contact_phone || "+91 6263097104";
+  const siteName = branding?.site_name || "The Last Minute Project";
+  const supportEmail = branding?.support_email || "omjatale62@gmail.com";
+  const contactPhone = branding?.contact_phone || "+91 6263097104";
 
   return (
     <footer className="border-t border-border bg-card">
@@ -17,8 +16,8 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              {settings?.logo.logo_url ? (
-                <img src={settings.logo.logo_url} alt={siteName} className="h-8 max-w-[140px] object-contain" />
+              {branding?.logo_url ? (
+                <img src={branding.logo_url} alt={siteName} className="h-8 max-w-[140px] object-contain" />
               ) : (
                 <div className="h-8 w-8 rounded-lg bg-gradient-green" />
               )}
@@ -27,7 +26,7 @@ const Footer = () => {
               </span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              {tagline}
+              Your marketplace for academic and professional projects. Buy, sell, and collaborate.
             </p>
           </div>
 

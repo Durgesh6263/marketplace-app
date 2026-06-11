@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { Search, CreditCard, Download } from "lucide-react";
-import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const steps = [
   {
@@ -24,8 +23,6 @@ const steps = [
 ];
 
 const HowItWorks = () => {
-  const { data: settings } = useSiteSettings();
-  
   return (
     <section className="py-20">
       <div className="container mx-auto px-4">
@@ -36,13 +33,9 @@ const HowItWorks = () => {
           className="mb-12"
         >
           <h2 className="font-display text-3xl font-bold text-foreground">
-            {settings?.homepage.features_title || (
-              <>How it <span className="text-gradient-green">works</span></>
-            )}
+            How it <span className="text-gradient-green">works</span>
           </h2>
-          <p className="mt-2 text-muted-foreground">
-            {settings?.homepage.features_description || "Get started in three simple steps"}
-          </p>
+          <p className="mt-2 text-muted-foreground">Get started in three simple steps</p>
         </motion.div>
 
         <div className="grid gap-6 md:grid-cols-3">

@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import { useSiteSettings, useSiteSettingsSync } from "@/hooks/useSiteSettings";
 import RealtimeProvider from "@/components/RealtimeProvider";
 import Index from "./pages/Index";
 import Projects from "./pages/Projects";
@@ -22,18 +21,11 @@ import ForgotPassword from "./pages/seller/auth/ForgotPassword";
 import SellerDashboard from "./pages/seller/Dashboard";
 import ProtectedSellerRoute from "./components/auth/ProtectedSellerRoute";
 
-const SiteSettingsProvider = ({ children }: { children: React.ReactNode }) => {
-  const { data: settings } = useSiteSettings();
-  useSiteSettingsSync(settings);
-  return <>{children}</>;
-};
-
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <SiteSettingsProvider>
-      <TooltipProvider>
+    <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
@@ -65,7 +57,6 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
-    </SiteSettingsProvider>
   </QueryClientProvider>
 );
 

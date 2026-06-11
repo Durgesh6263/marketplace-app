@@ -5,12 +5,10 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-illustration.png";
-import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const HeroSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  const { data: settings } = useSiteSettings();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,11 +46,12 @@ const HeroSection = () => {
               </motion.div>
 
               <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                {settings?.homepage.hero_title || "Ship Your Next Project Faster"}
+                Your marketplace for{" "}
+                <span className="text-gradient-green">academic projects</span>
               </h1>
 
               <p className="max-w-lg text-lg text-muted-foreground">
-                {settings?.homepage.hero_subtitle || "Access hundreds of ready-to-use, verified computer science projects with complete source code and documentation."}
+                Discover, buy, and download production-ready projects. From web apps to ML models — find the perfect foundation for your next idea.
               </p>
             </div>
 
@@ -68,7 +67,7 @@ const HeroSection = () => {
                 />
               </div>
               <Button type="submit" variant="hero" className="h-12 px-6">
-                {settings?.homepage.cta_text || "Explore"}
+                Explore
               </Button>
             </form>
 

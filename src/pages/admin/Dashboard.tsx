@@ -32,7 +32,7 @@ import { motion } from "framer-motion";
 import AdminSellerRequests from "./SellerRequests";
 import AdminProjects from "./AdminProjects";
 import AdminContactSubmissions from "@/components/admin/ContactSubmissions";
-import SiteSettingsControls from "@/components/admin/SiteSettingsControls";
+import AdminBrandingControls from "@/components/admin/BrandingControls";
 import MonthlySalesChart from "@/components/admin/MonthlySalesChart";
 import RecentOrdersTable from "@/components/admin/RecentOrdersTable";
 import TopSellingProjects from "@/components/admin/TopSellingProjects";
@@ -121,8 +121,8 @@ const AdminDashboard = () => {
         return <AdminProjects />;
       case "/admin/contact-submissions":
         return <AdminContactSubmissions />;
-      case "/admin/settings":
-        return <SiteSettingsControls />;
+      case "/admin/branding":
+        return <AdminBrandingControls />;
       case "/admin/users":
         return <AdminUsers />;
       case "/admin/orders":
