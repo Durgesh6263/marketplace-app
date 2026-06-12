@@ -646,14 +646,20 @@ const SellerDashboard = () => {
                             </td>
                             <td className="px-5 py-4">
                               <div className="flex gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditClick(proj)}
-                                  className="text-primary hover:text-primary hover:bg-primary/10"
+                                <span 
+                                  title={["Submitted", "Under Review", "Approved", "Suspended"].includes(proj.status) ? `This project is ${proj.status.toLowerCase()} and can no longer be edited. Contact admin if changes are required.` : "Edit Project"}
+                                  className="inline-block"
                                 >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditClick(proj)}
+                                    disabled={["Submitted", "Under Review", "Approved", "Suspended"].includes(proj.status)}
+                                    className="text-primary hover:text-primary hover:bg-primary/10 disabled:opacity-50 disabled:pointer-events-none"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                </span>
                                 <Button
                                   variant="ghost"
                                   size="sm"

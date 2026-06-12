@@ -25,7 +25,7 @@ service cloud.firestore {
       allow create: if request.auth != null && (getUserRole(request.auth.uid) == 'seller' || getUserRole(request.auth.uid) == 'admin');
       allow update, delete: if request.auth != null && (
         getUserRole(request.auth.uid) == 'admin' || 
-        (resource.data.seller_id == request.auth.uid && resource.data.status in ['Draft', 'Submitted', 'Under Review'])
+        (resource.data.seller_id == request.auth.uid && resource.data.status in ['Draft', 'Rejected'])
       );
     }
 
