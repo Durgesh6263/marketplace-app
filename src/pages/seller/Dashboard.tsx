@@ -189,11 +189,18 @@ const SellerDashboard = () => {
     try {
       const q = query(
         collection(db, "projects"),
-        where("seller_id", "==", user.uid),
-        orderBy("created_at", "desc")
+        where("seller_id", "==", user.uid)
       );
       const snap = await getDocs(q);
       const items = snap.docs.map(d => ({ id: d.id, ...d.data() } as SellerProject));
+      
+      // Sort locally to avoid needing a composite index
+      items.sort((a, b) => {
+        const timeA = a.created_at?.toDate ? a.created_at.toDate().getTime() : new Date(a.created_at || 0).getTime();
+        const timeB = b.created_at?.toDate ? b.created_at.toDate().getTime() : new Date(b.created_at || 0).getTime();
+        return timeB - timeA;
+      });
+
       setSellerProjects(items);
     } catch (err) {
       console.error("Error fetching projects:", err);
@@ -442,9 +449,15 @@ const SellerDashboard = () => {
     if (!form.tech_stack.trim()) errors.tech_stack = "Tech stack is required";
     if (!form.features.trim()) errors.features = "Features list is required";
 
-    if (form.demo_video_url.trim()) {
+    if (!form.demo_video_url.trim()) {
+      errors.demo_video_url = "YouTube demo video link is required";
+    } else {
       const ytId = getYouTubeId(form.demo_video_url);
       if (!ytId) errors.demo_video_url = "Please enter a valid YouTube video URL";
+    }
+    
+    if (!form.download_url.trim()) {
+      errors.download_url = "Google Drive folder link is required";
     }
 
     if (form.projectImages.length > 4) errors.screenshots = "Maximum 4 screenshots allowed";
@@ -473,10 +486,10 @@ const SellerDashboard = () => {
         demo_video_url: form.demo_video_url.trim(),
         thumbnail: form.thumbnail,
         projectImages: form.projectImages,
-        source_code_zip: form.source_code_zip,
-        project_report_pdf: form.project_report_pdf,
-        installation_guide_pdf: form.installation_guide_pdf,
-        download_url: form.download_url.trim() || form.source_code_zip, // fallback to zip
+        source_code_zip: "",
+        project_report_pdf: "",
+        installation_guide_pdf: "",
+        download_url: form.download_url.trim(),
         version: form.version.trim() || "v1.0",
         seller_declaration: form.seller_declaration,
         seller_id: user?.uid,
@@ -754,26 +767,14 @@ const SellerDashboard = () => {
                   </div>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="version">Version *</Label>
-                    <Input
-                      id="version"
-                      placeholder="e.g. v1.0"
-                      value={form.version}
-                      onChange={(e) => setForm(prev => ({ ...prev, version: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="download_url">External Download Link (Google Drive) *</Label>
-                    <Input
-                      id="download_url"
-                      placeholder="https://drive.google.com/..."
-                      value={form.download_url}
-                      onChange={(e) => setForm(prev => ({ ...prev, download_url: e.target.value }))}
-                    />
-                    <p className="text-[10px] text-muted-foreground font-body">Backup Google Drive link for buyer download delivery.</p>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="version">Version *</Label>
+                  <Input
+                    id="version"
+                    placeholder="e.g. v1.0"
+                    value={form.version}
+                    onChange={(e) => setForm(prev => ({ ...prev, version: e.target.value }))}
+                  />
                 </div>
               </div>
 
@@ -831,17 +832,7 @@ const SellerDashboard = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="demo_video_url">Demo Video URL (YouTube Link)</Label>
-                  <Input
-                    id="demo_video_url"
-                    placeholder="e.g. https://www.youtube.com/watch?v=..."
-                    value={form.demo_video_url}
-                    onChange={(e) => setForm(prev => ({ ...prev, demo_video_url: e.target.value }))}
-                    className={formErrors.demo_video_url ? "border-destructive focus-visible:ring-destructive" : ""}
-                  />
-                  {formErrors.demo_video_url && <p className="text-xs text-destructive">{formErrors.demo_video_url}</p>}
-                </div>
+
               </div>
 
               {/* Upload Media */}
@@ -909,84 +900,84 @@ const SellerDashboard = () => {
                 </div>
               </div>
 
-              {/* Upload Required Documents */}
-              <div className="space-y-4 pt-4 border-t border-border">
-                <h3 className="text-lg font-semibold border-b border-border pb-2 text-primary">Source & Documents</h3>
+              {/* Project Files & Verification */}
+              <div className="space-y-6 pt-4 border-t border-border">
+                <h3 className="text-lg font-semibold border-b border-border pb-2 text-primary">Project Files & Verification</h3>
                 
-                <div className="grid gap-6 md:grid-cols-3">
-                  {/* Source Code ZIP */}
-                  <div className="space-y-2 rounded-lg border border-border/60 bg-secondary/10 p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FileArchive className="h-5 w-5 text-blue-400" />
-                      <Label className="font-semibold text-sm">Source Code ZIP</Label>
+                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 space-y-5">
+                  <div className="flex items-center gap-2 text-destructive font-bold text-xl">
+                    <span>📌</span> Project Submission Requirements
+                  </div>
+                  
+                  <div className="space-y-4 text-sm text-foreground/90 font-medium">
+                    <div>
+                      <p>1. Upload all project files to <strong className="text-primary">Google Drive</strong>.</p>
+                      <p className="mt-1">Your Google Drive folder must contain:</p>
+                      <ul className="list-disc pl-6 space-y-1 mt-1">
+                        <li>Source Code</li>
+                        <li>Project Report PDF</li>
+                        <li>Installation Guide PDF</li>
+                        <li>Any required assets or dependencies</li>
+                      </ul>
                     </div>
-                    <Input
-                      type="file"
-                      accept=".zip"
-                      onChange={(e) => handleFileUpload(e, "source_code_zip", "source_code")}
-                      className="cursor-pointer bg-secondary/20 text-xs"
-                      disabled={uploadProgress.source_code_zip > 0}
-                    />
-                    {uploadProgress.source_code_zip > 0 && (
-                      <div className="space-y-1">
-                        <div className="w-full bg-secondary h-1.5 rounded overflow-hidden mt-2">
-                          <div className="bg-blue-400 h-full transition-all duration-300" style={{ width: `${uploadProgress.source_code_zip}%` }} />
-                        </div>
-                        <p className="text-[10px] text-right text-muted-foreground">{uploadProgress.source_code_zip}%</p>
-                      </div>
-                    )}
-                    {form.source_code_zip && <p className="text-xs text-primary truncate mt-1">✓ File ready</p>}
-                    {formErrors.source_code_zip && <p className="text-xs text-destructive">{formErrors.source_code_zip}</p>}
+
+                    <p>2. Make sure the Google Drive folder is accessible. <br/><span className="text-muted-foreground ml-4">(Recommended: "Anyone with the link can view/download")</span></p>
+
+                    <p>3. Paste the Google Drive folder link in the <strong className="text-primary">Download URL</strong> field below.</p>
+
+                    <div>
+                      <p>4. Upload a complete project demo video to <strong className="text-primary">YouTube</strong>.</p>
+                      <p className="mt-1">The video should include:</p>
+                      <ul className="list-disc pl-6 space-y-1 mt-1">
+                        <li>Project introduction</li>
+                        <li>Features explanation</li>
+                        <li>Complete working demo</li>
+                        <li>Installation process</li>
+                        <li>Project execution/output</li>
+                      </ul>
+                    </div>
+
+                    <p>5. Set the YouTube video visibility to: <strong className="text-primary">Private OR Unlisted</strong>.</p>
+
+                    <p>6. Paste the YouTube video link in the <strong className="text-primary">Demo Video URL</strong> field below.</p>
                   </div>
 
-                  {/* Project Report PDF */}
-                  <div className="space-y-2 rounded-lg border border-border/60 bg-secondary/10 p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FileText className="h-5 w-5 text-red-400" />
-                      <Label className="font-semibold text-sm">Project Report PDF</Label>
-                    </div>
+                  <div className="mt-6 pt-5 border-t border-destructive/20 space-y-3 bg-destructive/5 p-4 rounded-md">
+                    <p className="font-bold text-destructive text-sm tracking-wider uppercase">⚠️ Admin Verification Notice</p>
+                    <ul className="list-none space-y-2 text-sm text-destructive font-medium">
+                      <li>⚠️ Projects without a complete Google Drive folder will be rejected.</li>
+                      <li>⚠️ Projects without a complete demo video will be rejected.</li>
+                      <li>⚠️ Broken Google Drive links will be rejected.</li>
+                      <li>⚠️ Missing source code, report, or installation guide will result in rejection.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="download_url_new" className="text-base font-semibold">Download URL (Google Drive Folder) *</Label>
                     <Input
-                      type="file"
-                      accept=".pdf"
-                      onChange={(e) => handleFileUpload(e, "project_report_pdf", "reports")}
-                      className="cursor-pointer bg-secondary/20 text-xs"
-                      disabled={uploadProgress.project_report_pdf > 0}
+                      id="download_url_new"
+                      placeholder="https://drive.google.com/..."
+                      value={form.download_url}
+                      onChange={(e) => setForm(prev => ({ ...prev, download_url: e.target.value }))}
+                      className={`h-11 ${formErrors.download_url ? "border-destructive focus-visible:ring-destructive" : "border-primary/30 focus-visible:ring-primary"}`}
                     />
-                    {uploadProgress.project_report_pdf > 0 && (
-                      <div className="space-y-1">
-                        <div className="w-full bg-secondary h-1.5 rounded overflow-hidden mt-2">
-                          <div className="bg-red-400 h-full transition-all duration-300" style={{ width: `${uploadProgress.project_report_pdf}%` }} />
-                        </div>
-                        <p className="text-[10px] text-right text-muted-foreground">{uploadProgress.project_report_pdf}%</p>
-                      </div>
-                    )}
-                    {form.project_report_pdf && <p className="text-xs text-primary truncate mt-1">✓ Document ready</p>}
-                    {formErrors.project_report_pdf && <p className="text-xs text-destructive">{formErrors.project_report_pdf}</p>}
+                    <p className="text-xs text-muted-foreground font-body">Paste the shared link to your Google Drive folder containing all required files.</p>
+                    {formErrors.download_url && <p className="text-xs text-destructive">{formErrors.download_url}</p>}
                   </div>
 
-                  {/* Installation Guide PDF */}
-                  <div className="space-y-2 rounded-lg border border-border/60 bg-secondary/10 p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FileText className="h-5 w-5 text-green-400" />
-                      <Label className="font-semibold text-sm">Installation Guide PDF</Label>
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="demo_video_url_new" className="text-base font-semibold">Demo Video URL (YouTube Link) *</Label>
                     <Input
-                      type="file"
-                      accept=".pdf"
-                      onChange={(e) => handleFileUpload(e, "installation_guide_pdf", "guides")}
-                      className="cursor-pointer bg-secondary/20 text-xs"
-                      disabled={uploadProgress.installation_guide_pdf > 0}
+                      id="demo_video_url_new"
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      value={form.demo_video_url}
+                      onChange={(e) => setForm(prev => ({ ...prev, demo_video_url: e.target.value }))}
+                      className={`h-11 ${formErrors.demo_video_url ? "border-destructive focus-visible:ring-destructive" : "border-primary/30 focus-visible:ring-primary"}`}
                     />
-                    {uploadProgress.installation_guide_pdf > 0 && (
-                      <div className="space-y-1">
-                        <div className="w-full bg-secondary h-1.5 rounded overflow-hidden mt-2">
-                          <div className="bg-green-400 h-full transition-all duration-300" style={{ width: `${uploadProgress.installation_guide_pdf}%` }} />
-                        </div>
-                        <p className="text-[10px] text-right text-muted-foreground">{uploadProgress.installation_guide_pdf}%</p>
-                      </div>
-                    )}
-                    {form.installation_guide_pdf && <p className="text-xs text-primary truncate mt-1">✓ Document ready</p>}
-                    {formErrors.installation_guide_pdf && <p className="text-xs text-destructive">{formErrors.installation_guide_pdf}</p>}
+                    <p className="text-xs text-muted-foreground font-body">Paste the link to your unlisted/private YouTube demo video.</p>
+                    {formErrors.demo_video_url && <p className="text-xs text-destructive">{formErrors.demo_video_url}</p>}
                   </div>
                 </div>
               </div>

@@ -49,6 +49,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 // Interface for Seller Onboarding Request (original collection)
 interface SellerRequest {
@@ -136,6 +137,7 @@ const AdminSellerRequests = () => {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Fetch Onboarding Requests
   const { data: onboardingRequests = [], isLoading: loadingOnboarding, refetch: refetchOnboarding } = useQuery<SellerRequest[]>({
@@ -232,6 +234,8 @@ const AdminSellerRequests = () => {
         status: "Approved",
         is_published: true,
         rejection_reason: null, // clear out any old rejection reasons
+        approvedBy: user?.uid || "admin",
+        approvedAt: serverTimestamp(),
         updated_at: serverTimestamp()
       });
 
@@ -277,6 +281,8 @@ const AdminSellerRequests = () => {
         status: "Rejected",
         is_published: false,
         rejection_reason: rejectionReason.trim(),
+        rejectedBy: user?.uid || "admin",
+        rejectedAt: serverTimestamp(),
         updated_at: serverTimestamp()
       });
 
