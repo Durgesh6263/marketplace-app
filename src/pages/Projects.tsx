@@ -14,7 +14,7 @@ const Projects = () => {
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const { data: projects = [], isLoading } = useProjects();
+  const { data: projects = [], isLoading, isError, error } = useProjects();
 
   const filtered = projects.filter((p) => {
     const matchSearch =
@@ -79,6 +79,11 @@ const Projects = () => {
               {[1, 2, 3].map((i) => (
                 <div key={i} className="h-80 rounded-xl border border-border bg-card animate-pulse" />
               ))}
+            </div>
+          ) : isError ? (
+            <div className="py-20 text-center">
+              <p className="text-lg text-destructive mb-2">Error loading projects</p>
+              <p className="text-sm text-muted-foreground">{error instanceof Error ? error.message : "Unknown error occurred"}</p>
             </div>
           ) : filtered.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

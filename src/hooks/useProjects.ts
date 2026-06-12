@@ -50,7 +50,10 @@ export const useProjectsRealtime = () => {
       isInitialLoad.current = false;
     }, 2000);
 
-    const q = query(collection(db, "projects"));
+    const q = query(
+      collection(db, "projects"),
+      where("status", "==", "Approved")
+    );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         const data = change.doc.data() as DBProject;
@@ -103,7 +106,7 @@ export const useProjects = () => {
     queryFn: async (): Promise<Project[]> => {
       const q = query(
         collection(db, "projects"),
-        where("is_published", "==", true)
+        where("status", "==", "Approved")
       );
       const snapshot = await getDocs(q);
       const docs = snapshot.docs.map(doc => mapToProject(doc.id, doc.data() as DBProject));
