@@ -33,8 +33,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID || "rzp_live_SojdpFjfALNMvp",
-      key_secret: process.env.RAZORPAY_KEY_SECRET || "o3jrSQSUAf9CA9kg4MdWcAyz",
+      key_id: process.env.RAZORPAY_KEY_ID || "",
+      key_secret: process.env.RAZORPAY_KEY_SECRET || "",
     });
 
     const projectRef = db.collection("projects").doc(project_id);
@@ -72,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       data: {
         order_id: orderRef.id,
         razorpay_order_id: order.id,
-        razorpay_key_id: process.env.RAZORPAY_KEY_ID || "rzp_live_SojdpFjfALNMvp",
+        razorpay_key_id: process.env.RAZORPAY_KEY_ID || "",
         amount,
         currency: "INR",
         project_title: project!.title
