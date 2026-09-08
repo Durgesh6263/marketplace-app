@@ -8,8 +8,8 @@ const db = admin.firestore();
 
 // Initialize Razorpay (store these in Firebase environment config or Secret Manager)
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || "rzp_live_SojdpFjfALNMvp",
-  key_secret: process.env.RAZORPAY_KEY_SECRET || "o3jrSQSUAf9CA9kg4MdWcAyz",
+  key_id: process.env.RAZORPAY_KEY_ID || "",
+  key_secret: process.env.RAZORPAY_KEY_SECRET || "",
 });
 
 export const createOrder = functions.https.onCall(async (request: any) => {
@@ -47,7 +47,7 @@ export const createOrder = functions.https.onCall(async (request: any) => {
     return {
       order_id: orderRef.id,
       razorpay_order_id: order.id,
-      razorpay_key_id: process.env.RAZORPAY_KEY_ID || "rzp_live_SojdpFjfALNMvp",
+      razorpay_key_id: process.env.RAZORPAY_KEY_ID || "",
       amount,
       currency: "INR",
       project_title: project!.title
@@ -64,7 +64,7 @@ export const verifyPayment = functions.https.onCall(async (request: any) => {
   try {
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "o3jrSQSUAf9CA9kg4MdWcAyz")
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "")
       .update(body.toString())
       .digest("hex");
 
